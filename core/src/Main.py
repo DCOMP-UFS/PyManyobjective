@@ -32,8 +32,8 @@ mutation = PolynomialMutation(mutationProbability, mutationDistributionIndex)
 selection = BinaryTournament()
 
 sparsity = CrowdingDistance() 
-populationSize = 10
-maxEvaluations = 10
+populationSize = 100
+maxEvaluations = 300
 algorithm = NSGAII(problem=problem,
                    maxEvaluations=maxEvaluations,
                    populationSize=populationSize,

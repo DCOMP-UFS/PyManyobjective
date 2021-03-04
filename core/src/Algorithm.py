@@ -6,8 +6,6 @@ Created on Fri Jan 22 07:26:33 2021
 """
 
 from ParetoFront import ParetoFront
-from numpy import random
-from matplotlib import pyplot as plt
 import numpy as np
 
 # Classe abstrata do algoritmos
@@ -138,4 +136,91 @@ class NSGAII(Algorithm):
       
       for i in range(int(self.populationSize/2)):
         self.evolute()
+        
+
+# Classe do algoritmo NSGA-II
+class NSGAIII(Algorithm):
+  def __init__(self, problem,
+               maxEvaluations,
+               crossover,
+               mutation,
+               selection,
+               sparsity,
+               referencePoints,
+               numberOfDivisions=12):
+    populationSize = len(referencePoints)
+    while populationSize%4 > 0:
+      populationSize += 1
+      
+    super(NSGAIII,self).__init__(problem=problem,
+                                 maxEvaluations=maxEvaluations,
+                                 populationSize=populationSize,
+                                 offSpringPopulationSize=populationSize,
+                                 crossover=crossover,
+                                 mutation=mutation,
+                                 selection=selection,
+                                 sparsity=sparsity)
     
+    self.numberOfDivisions = numberOfDivisions
+    self.referencePoints   = referencePoints
+    
+  # TODO
+  def normalize(self, solutionSet, referencePoints):
+    pass
+  
+  # TODO
+  def associate(self, solutionSet, referenceSet):
+    pass
+    
+  # TODO
+  def niching(self, k, nicheCount, pi, dist, referenceSet, front):
+    pass
+    
+  def execute(self):
+    self.initializePopulation()
+    self.createOffspring()
+    
+    while self.evaluations < self.maxEvaluations:
+      if (self.evaluations % 1000) == 0:
+        print("Epoch: " + str(self.evaluations) + " de " + str(self.maxEvaluations) + "...")
+      
+      solutionSet = set()
+      
+      mixedPopulation = self.population.union(self.offspring)
+      self.population.clear()
+      self.offspring.clear()
+      
+      fronts = self.paretoFront.fastNonDominatedSort(list(mixedPopulation))
+      
+      i = 0
+      while solutionSet < self.populationSize:
+        ordered_front = self.sparsity.compute(fronts[i])
+        ordered_front = sorted(ordered_front, key=lambda x: x.sparsity)
+        
+        for solution in ordered_front:
+          solutionSet.add(solution.clone())
+        
+        i += 1
+        
+      front = fronts[i-1]
+      if solutionSet == self.populationSize:
+        for solution in solutionSet:
+          self.population.add(solution)
+      else:
+        for solution in front:
+          self.population.add(solution)
+        
+        k            = self.populationSize - len(self.population)
+        referenceSet = self.normalize(solutionSet, self.referencePoints)
+        pi,dist      = self.associate(solutionSet, referenceSet)
+        nicheCount   = sum([int(pi == j) for j in referenceSet])
+        solutionList = self.niching(k,nicheCount,pi,dist,referenceSet,front)
+        
+        for solution in solutionList:
+          self.population.add(solution)
+        
+      
+        
+      
+      # for i in range(int(self.populationSize/2)):
+      #   self.evolute()
