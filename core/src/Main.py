@@ -10,7 +10,7 @@ from Operator import SBXCrossover
 from Operator import BinaryTournament
 from Operator import PolynomialMutation
 from Operator import CrowdingDistance
-from Algorithm import NSGAII
+from Algorithm import NSGAIII
 from QualityIndicator import IGD
 from QualityIndicator import GD
 
@@ -31,17 +31,13 @@ mutation = PolynomialMutation(mutationProbability, mutationDistributionIndex)
 
 selection = BinaryTournament()
 
-sparsity = CrowdingDistance() 
 populationSize = 100
 maxEvaluations = 300
-algorithm = NSGAII(problem=problem,
-                   maxEvaluations=maxEvaluations,
-                   populationSize=populationSize,
-                   offSpringPopulationSize=populationSize,
-                   crossover=crossover,
-                   mutation=mutation,
-                   selection=selection,
-                   sparsity=sparsity)
+algorithm = NSGAIII(problem=problem,
+                    maxEvaluations=maxEvaluations,
+                    crossover=crossover,
+                    mutation=mutation,
+                    selection=selection)
 
 algorithm.execute()
 

@@ -5,8 +5,11 @@ Created on Fri Jan 22 07:26:33 2021
 @author: jcpereira
 """
 
+from Util import ReferencePoint
+from Util import perpendicularDistance
 from ParetoFront import ParetoFront
 import numpy as np
+from numpy import random
 
 # Classe abstrata do algoritmos
 class Algorithm:
@@ -29,7 +32,7 @@ class Algorithm:
     self.selection               = selection
     self.sparsity                = sparsity
     self.population              = set()
-    self.evaluations             = 0
+    self.evaluations             = 1
     self.paretoFront             = ParetoFront()
     self.offspring               = set()
     self.lowerBound              = [ np.Inf for _ in range(problem.numberOfDecisionVariables)]
@@ -136,51 +139,201 @@ class NSGAII(Algorithm):
       
       for i in range(int(self.populationSize/2)):
         self.evolute()
-        
 
 # Classe do algoritmo NSGA-II
 class NSGAIII(Algorithm):
+  
   def __init__(self, problem,
                maxEvaluations,
                crossover,
                mutation,
                selection,
-               sparsity,
-               referencePoints,
                numberOfDivisions=12):
-    populationSize = len(referencePoints)
-    while populationSize%4 > 0:
-      populationSize += 1
-      
     super(NSGAIII,self).__init__(problem=problem,
                                  maxEvaluations=maxEvaluations,
-                                 populationSize=populationSize,
-                                 offSpringPopulationSize=populationSize,
+                                 populationSize=0,
+                                 offSpringPopulationSize=0,
                                  crossover=crossover,
                                  mutation=mutation,
                                  selection=selection,
-                                 sparsity=sparsity)
+                                 sparsity=None)
     
     self.numberOfDivisions = numberOfDivisions
-    self.referencePoints   = referencePoints
     
-  # TODO
-  def normalize(self, solutionSet, referencePoints):
-    pass
+    refPoint             = ReferencePoint()
+    self.referencePoints = refPoint.generateReferencePoints(self.problem.numberOfObjectives,
+                                                            self.numberOfDivisions)
+    
+    populationSize = len(self.referencePoints)
+    while populationSize%4 > 0:
+      populationSize += 1
+      
+    self.populationSize          = populationSize
+    self.offSpringPopulationSize = populationSize
+    self.referencePointsTree     = dict()
+    
+  def translateObjectives(self, fronts):
+    ideal_point = list()
+    m           = self.problem.numberOfObjectives
+    newFront    = set()
+    for i in range(m):
+      minObj = np.Inf
+      for s in fronts[0]:
+        minObj = min(minObj, s[i])
+      
+      ideal_point.append(minObj)
+      
+      for f in fronts:
+        solutionList = list()
+        for s in f:
+          if i == 0:
+            solutionList.append(list())
+          solutionList[s.objectives[i]-minObj]
+        newFront.append(solutionList)
+        
+    return ideal_point, newFront
+        
+  def ASF(self, solution, index):
+    maxRatio = -np.Inf
+    
+    for i in range(solution.numberOfObjectives):
+      w = 0
+      if index == i:
+        w = 1.0
+      else:
+        w = 0.000001
+      maxRatio = max(maxRatio, solution.objectives[i]/w)
+        
+    return maxRatio
   
-  # TODO
-  def associate(self, solutionSet, referenceSet):
-    pass
+  def findExtremePoints(self, fronts):
+    extremePoints = list()
+    minInd        = None
     
-  # TODO
-  def niching(self, k, nicheCount, pi, dist, referenceSet, front):
-    pass
+    for i in range(self.problem.numberOfObjectives):
+      minASF = np.Inf
+      
+      for s in fronts[0]:
+        asf = self.ASF(s, i)
+        
+        if asf < minASF:
+          minASF = asf
+          minInd = s
+      extremePoints.append(minInd)
+      
+    return extremePoints
+    
+  def guassianElimination(self, A, b):
+    N = len(A)
+    
+    for i in range(N):
+      A[i].append(b[i])
+      
+    for base in range(N-1):
+      for target in range(base+1, N):
+        ratio = A[target][base]/A[base][base]
+        
+        for term in range(len(A[base])):
+          A[target][term] = A[target][term] - A[base][term]*ratio
+          
+    x = [0.0 for _ in range(N)]
+    
+    for i in reversed(range(N)):
+      for known in range(i+1, N):
+        A[i][N] = A[i][N] - A[i][known]*x[known]
+      x[i] = A[i][N]/A[i][i]
+    
+    return x
+
+  def hyperplane(self, fronts, extremePoints):
+    duplicate = False
+    m         = self.problem.numberOfObjectives
+    
+    i = 0
+    while (not duplicate) and i < len(extremePoints):
+      j = i+1
+      while (not duplicate) and j < len(extremePoints):
+        duplicate = extremePoints[i].objectives == extremePoints[j].objectives 
+        duplicate = duplicate and extremePoints[i].objectives == extremePoints[j].objectives
+        
+    intercepts = list()
+    
+    if duplicate:
+      intercepts = [extremePoints[i].objectives[i] for i in range(m)]
+    else:
+      b = [1.0 for _ in range(m)]
+      A = [s.objectives.copy() for s in extremePoints]
+      x = self.guassianElimination(A,b)
+      
+      intercepts = [1.0/x[i] for i in range(m)]
+    
+    return intercepts
+  
+  def normalize(self, fronts, intercepts, idealPoint):
+    normalizedFront = list()
+    m               = self.problem.numberOfObjectives
+    
+    for front in fronts:
+      solutionList = list()
+      for s in front:
+        for f in range(m):
+          convObj = s.objectives
+          if abs(intercepts[f]-idealPoint[f]) > 10e-10:
+            convObj[f] = convObj[f]/(intercepts[f]-idealPoint[f])
+          else:
+            convObj[f] = convObj[f]/10e-10
+        solution = s.clone()
+        solution.objectives = convObj
+        solutionList.append(solution)
+        
+      normalizedFront.append(solutionList)
+    
+    return normalizedFront
+  
+  def associate(self, fronts):
+    for t in range(fronts):
+      for s in fronts[t]:
+        minRefpoint = -1
+        minDistance = np.Inf
+        
+        for r in range(len(self.referencePoints)):
+          d = perpendicularDistance(self.referencePoints[r].position, s.objectives)
+          
+          if d < minDistance:
+            minDistance = d
+            minRefpoint = r
+          
+        if t+1 != len(fronts):
+          self.referencePoints[minRefpoint].addMember()
+        else:
+          self.referencePoints[minRefpoint].addPotentialMember(s,minDistance)
+  
+  def selectClusterMember(self, referencePoint):
+    chosen = None
+    
+    if len(referencePoint.potentialMembers) > 0:
+      if referencePoint.memberSize == 0:
+        chosen = referencePoint.findClosestMember()
+      else:
+        chosen = referencePoint.randomMember()
+      
+    return chosen
+  
+  
+  def addToTree(self, referencePoint):
+    key = referencePoint.memberSize
+
+    if not key in self.referencePointsTree.keys():
+      self.referencePointsTree[key] = list()
+    
+    self.referencePointsTree[key] = referencePoint
+      
     
   def execute(self):
     self.initializePopulation()
     self.createOffspring()
     
-    while self.evaluations < self.maxEvaluations:
+    while self.evaluations <= self.maxEvaluations:
       if (self.evaluations % 1000) == 0:
         print("Epoch: " + str(self.evaluations) + " de " + str(self.maxEvaluations) + "...")
       
@@ -210,17 +363,44 @@ class NSGAIII(Algorithm):
         for solution in front:
           self.population.add(solution)
         
-        k            = self.populationSize - len(self.population)
-        referenceSet = self.normalize(solutionSet, self.referencePoints)
-        pi,dist      = self.associate(solutionSet, referenceSet)
-        nicheCount   = sum([int(pi == j) for j in referenceSet])
-        solutionList = self.niching(k,nicheCount,pi,dist,referenceSet,front)
+        k                 = self.populationSize - len(self.population)
         
-        for solution in solutionList:
-          self.population.add(solution)
+        idealPoint,fronts = self.translateObjectives(fronts)
+        extremePoints     = self.findExtremePoints(fronts)
+        intercepts        = self.hyperplane(fronts, extremePoints)
+        fronts            = self.normalize(fronts, intercepts, idealPoint)
         
+        self.associate(fronts)
+        
+        for rp in self.referencePoints:
+          rp.sort()
+          self.addToTree(rp)
+        
+        solutionList = list()
+        
+        # TODO: niching
+        while len(solutionList) < k:
+          first         = list(self.referencePointsTree.keys())[0]
+          refPointIndex = 0
+          
+          size = len(first)
+          if size > 1:
+            refPointIndex = random.choice(list(range(size)))
+          
+          refPoint = self.referencePointsTree[first][refPointIndex]
+          self.referencePointsTree[first].remove(refPoint)
+          
+          if len(first) == 0:
+            self.referencePoints.popitem(first)
+          
+          chosen = self.selectClusterMember(refPoint)
+          
+          
+        
+        
+        # nicheCount   = sum([int(pi == j) for j in referenceSet])
+        # solutionList = self.niching(k,nicheCount,pi,dist,referenceSet,front)
+
       
-        
-      
-      # for i in range(int(self.populationSize/2)):
-      #   self.evolute()
+      for i in range(int(self.populationSize/2)):
+        self.evolute()
