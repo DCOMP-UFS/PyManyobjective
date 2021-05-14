@@ -56,16 +56,15 @@ class ReferencePoint:
     self.potentialMembers.sort(key=lambda x: x[1], reverse=True)
     
   def findClosestMember(self):
-    member                = self.potentialMembers[len(self.potentialMembers)-1]
-    self.potentialMembers = self.potentialMembers[:(len(self.potentialMembers)-1)]
-    return member
+    return self.potentialMembers.pop(len(self.potentialMembers)-1)
   
   def randomMember(self):
     index  = random.choice([i for i in range(len(self.potentialMembers))])
-    member = self.potentialMembers[index]
-    
-    self.potentialMembers.remove(member)
-    return  member
+    member = self.potentialMembers.pop(index)
+    return member
+  
+  def remove(self, refPoint):
+    self.potentialMembers.remove(refPoint)
   
 def euclideanDistance(a, b):
   dist = 0
@@ -93,6 +92,6 @@ def perpendicularDistance(direction, point):
   
   d = 0
   for i in range(len(direction)):
-    d += math.pow(k*direction.get(i) - point.get(i),2.0)
+    d += math.pow(k*direction[i] - point[i],2.0)
     
   return math.sqrt(d)
