@@ -5,6 +5,7 @@ Created on Thu Jan 28 10:49:41 2021
 @author: jcpereira
 """
 
+from DTLZ2 import DTLZ2
 from DTLZ1 import DTLZ1
 from SBXCrossover import SBXCrossover
 from BinaryTournament import BinaryTournament
@@ -13,7 +14,7 @@ from NSGAIII import NSGAIII
 from QualityIndicator import IGD
 from QualityIndicator import GD
 
-numberOfObjectives = 3
+numberOfObjectives = 8
 k = 10
 numberOfDecisionVariables = k + numberOfObjectives - 1
 problem = DTLZ1(numberOfObjectives,k)
@@ -30,9 +31,9 @@ mutation = PolynomialMutation(mutationProbability, mutationDistributionIndex)
 
 selection = BinaryTournament()
 
-maxEvaluations = 400
+maxEvaluations = 750
 
-file = open('../resources/ReferenceFronts/DTLZ/DTLZ1.3D.csv','r')
+file = open('../resources/ReferenceFronts/DTLZ/DTLZ1.8D.csv','r')
 file_front = []
 for line in file.read().split('\n'):
   file_front.append([float(x) for x in line.split(',') if x != ''])
@@ -48,7 +49,7 @@ for i in range(1,21):
                       crossover=crossover,
                       mutation=mutation,
                       selection=selection,
-                      numberOfDivisions=12)
+                      numberOfDivisions=6)
   
   algorithm.execute()
 
