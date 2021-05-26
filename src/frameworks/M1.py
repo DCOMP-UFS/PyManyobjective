@@ -2,26 +2,44 @@ import math
 import numpy as np
 from pyDOE import lhs
 from smt.surrogate_models import KRG
-from fast_non_dominated_sort import fast_non_dominated_sort
 import sys
 
-# manage Kriging input/output
-class SM_QF_layer():
-    def __init__(self, SMs, n_vars, xl, xu):
-        self.SMs = SMs
-        self.n_vars = n_vars
-        self.xl = xl
-        self.xu = xu
+from Problem import Problem
+from Solution import Solution
+from ParetoFront import ParetoFront
 
-    def evaluate(self, x):
-        obj_solutions = self.SMs[0].predict_values(x)
-        for i in range(1, len(self.SMs)):
-            obj_solutions = np.hstack((obj_solutions, self.SMs[i].predict_values(x)))
-        return obj_solutions
+# manage Kriging input/output
+class SM_QF_layer(Problem):
+    def __init__(self, SMs, numberOfObjectives, numberOfDecisionVariables, decisionVariablesLimit=None):
+        super(SM_QF_layer, self).__init__(numberOfObjectives, numberOfDecisionVariables, decisionVariablesLimit=None)
+        self.SMs = SMs
+
+        lowerBounds = [0.0 for _ in range(numberOfDecisionVariables)]
+        upperBounds = [1.0 for _ in range(numberOfDecisionVariables)]
+    
+        self.decisionVariablesLimit = (lowerBounds, upperBounds)
+
+    def evaluate(self, solution):
+        objectives = []
+        for i in range(len(self.SMs)):
+            objectives.append(self.SMs[i].predict_values(np.array([solution.decisionVariables]))[0][0])
+        solution.objectives = objectives
+        return solution
+
+def lhs_to_solution(A, numberOfObjectives, numberOfDecisionVariables):
+    B = list()
+    for a in A:
+        b = Solution(numberOfObjectives, numberOfDecisionVariables)
+        decisionVariables = []
+        for x in a:
+            decisionVariables.append(x)
+        b.decisionVariables = decisionVariables
+        B.append(b)
+    return B
 
 class M1():
-    def __init__(self, f, n_vars, p, tau, SEmax, EMO, mi, n_objs, EMO_gens):
-        self.f = f  # objective function
+    def __init__(self, problem, n_vars, p, tau, SEmax, EMO, mi, n_objs, EMO_gens):
+        self.problem = problem  # objective function
         self.n_vars = n_vars  # number of variables
         self.p = p  # sample size
         self.tau = tau  # generations per metamodel
@@ -36,27 +54,36 @@ class M1():
         ####################### FIXME ######################
         # check attributes
         # obj_function
-        assert (self.f.n_vars == self.n_vars)
-        assert (self.f.n_objs == self.n_objs)
+        print(self.problem.numberOfObjectives)
+        assert(self.problem.numberOfDecisionVariables == self.n_vars)
+        assert(self.problem.numberOfObjectives == self.n_objs)
         # EMO
-        assert (self.EMO.pop_size == self.mi)
-        assert (self.EMO.n_objs == self.n_objs)
+        assert(self.EMO.populationSize == self.mi)
         ####################################################
 
         t = 0
         k = (t % self.tau)
-        Pt = np.zeros((0, self.n_vars))
-        Pk = lhs(self.n_vars, samples=self.p)  # initialize surrogate model's training set
+        Pt = []
+        Pk = lhs_to_solution(lhs(self.n_vars, samples=self.p), self.n_objs, self.n_vars)  # initialize surrogate model's training set
+        paretoFront = ParetoFront()
 
         eval = 0
         while (eval < self.SEmax):
             if t % self.tau == 0:
-                Pk = np.concatenate((Pk, Pt))
-                Pk = np.unique(Pk, axis=0)
+                Pk = list(set(Pk + Pt))
+                print(Pk)
 
                 # high-fidelity evaluations (functions)
-                F_all = self.f.evaluate(Pk)
-                Fkm = np.transpose(F_all)
+                for p in Pk:
+                    self.problem.evaluate(p)
+                Fkm = []
+                for i in range(self.n_objs):
+                    Fkm.append([])
+                    for p in Pk:
+                        Fkm[i].append(p.objectives[i])
+                X = []
+                for p in Pk:
+                    X.append(p.decisionVariables)
 
                 eval = len(Pk)
 
@@ -64,40 +91,39 @@ class M1():
                 SMs = []  # surrogate models
                 for i in range(self.n_objs):
                     SM = KRG(print_training=False, print_prediction=False)
-                    SM.set_training_values(Pk, Fkm[i])
+                    SM.set_training_values(np.array(X), np.array(Fkm[i]))
                     SM.train()
                     SMs.append(SM)
                 # update EMO to use the created surrogates as objective function
                 # class SM_QF_layer above
-                self.EMO.f = SM_QF_layer(SMs, self.n_vars, self.f.xl, self.f.xu)
+                self.EMO.problem = SM_QF_layer(SMs, self.problem.numberOfObjectives, self.problem.numberOfDecisionVariables, self.problem.decisionVariablesLimit)
 
                 if k == 0:
                     # Initialize EMO’s population
-                    Pt = lhs(self.n_vars, samples=self.mi)
+                    Pt = lhs_to_solution(lhs(self.n_vars, samples=self.mi), self.n_objs, self.n_vars)
                 else:
-                    ranks = fast_non_dominated_sort(len(Pk),
-                                                    F_all)  # any implementation of non-dominated sort using python list of lists will work
-                    Q = []
+                    paretoFront.fastNonDominatedSort(Pk)
+                    Pt = []
                     i = j = 0
-                    while len(Q) < self.mi and j < len(ranks):
-                        Q.append(ranks[j][i])
+                    while len(Pt) < self.mi and j < len(paretoFront.getInstance().front):
+                        Pt.append(paretoFront.getInstance().front[j][i])
                         i += 1
-                        if i == len(ranks[j]):
+                        if i == len(paretoFront.getInstance().front[j]):
                             i = 0
                             j += 1
-                    Pt = Pk[Q]
                 k += 1
 
             # Optimize surrogate model
-            Pt = self.EMO.run(Pt, n_gens=self.EMO_gens)
+            self.EMO.execute()
+            Pt = list(self.EMO.population)
             print(t + 1)
             t += 1
 
-        Pfinal = np.concatenate((Pk, Pt))
+        Pfinal = list(set(Pk + Pt))
 
         # evaluate Pfinal using objective function
-        F = self.f.evaluate(Pfinal)
+        for p in Pfinal:
+            self.problem.evaluate(p)
 
-        inds = fast_non_dominated_sort(len(Pfinal), F)[0]  # take indexes of pareto front
-
-        return Pfinal[inds]
+        paretoFront.fastNonDominatedSort(Pfinal)
+        return paretoFront.getInstance().front[0]
