@@ -27,10 +27,13 @@ class NSGAII(Algorithm):
                                 selection,
                                 sparsity)
     
-  def execute(self):
-    self.initializePopulation()
+  def execute(self, initialPopulation=None):
+    if initialPopulation == None:
+      self.initializePopulation()
+    else:
+      self.population = initialPopulation
     self.createOffspring()
-    
+
     while self.evaluations < self.maxEvaluations:
       if (self.evaluations % 1000) == 0:
         print("Evaluations: " + str(self.evaluations) + " de " + str(self.maxEvaluations) + "...")
