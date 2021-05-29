@@ -18,8 +18,8 @@ class ZDT1(Problem):
 
   def evalG(self, solution):
     g = 0.0
-    for x in solution.decisionVariables:
-      g += x
+    for i in range(1, solution.numberOfDecisionVariables):
+      g += solution.decisionVariables[i]
     constant = 9.0 / (solution.numberOfDecisionVariables - 1)
 
     return constant * g + 1.0
