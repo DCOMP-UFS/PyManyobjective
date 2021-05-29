@@ -114,7 +114,7 @@ class M1():
                 k += 1
 
             # Optimize surrogate model
-            self.EMO.execute()
+            self.EMO.execute(set(Pt))
             Pt = list(self.EMO.population)
             print(t + 1)
             t += 1
