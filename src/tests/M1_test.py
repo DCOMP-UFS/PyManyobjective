@@ -33,14 +33,16 @@ def run(numberOfDecisionVariables, problem, comp_file, print_igd, print_x, print
     mutation = PolynomialMutation(mutationProbability=1 / numberOfDecisionVariables, distributionIndex=20)
     selection = BinaryTournament()
 
+    crowdingDistance = CrowdingDistance()
+
     nsgaii = NSGAII(problem=problem,
-               maxEvaluations=100,
+               maxEvaluations=10000,
                populationSize=100,
                offSpringPopulationSize=100,
                crossover=crossover,
                mutation=mutation,
                selection=selection,
-               sparsity=None)
+               sparsity=crowdingDistance)
 
     m1 = M1(problem=problem, n_vars=10, p=300, tau=50, SEmax=500, EMO=nsgaii, mi=100, n_objs=2, EMO_gens=100)
     my_front = m1.run()
