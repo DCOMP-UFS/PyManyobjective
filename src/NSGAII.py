@@ -43,10 +43,10 @@ class NSGAII(Algorithm):
       self.offspring.clear()
       
       self.paretoFront.fastNonDominatedSort(list(mixedPopulation))
-      
+
       for f in self.paretoFront.getInstance().front:
-        ordered_front = self.sparsity.compute(f)
-        ordered_front = sorted(ordered_front, key=lambda x: x.sparsity)
+        self.sparsity.compute(f)
+        ordered_front = sorted(f, key=lambda x: x.sparsity)
         
         
         for solution in ordered_front:
