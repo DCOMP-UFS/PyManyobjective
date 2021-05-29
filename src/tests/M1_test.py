@@ -13,18 +13,18 @@ import matplotlib.pyplot as plt
 from pymoo.factory import get_performance_indicator
 
 class CrowdingDistance(Sparsity):
-    def compute(front):
+    def compute(self, front):
         for i in range(len(front)):
             front[i].sparsity = 0
-        for i in obj:
-            sorted_front = sorted(front, key=lambda x: x[i])
-            sorted_indexes = sorted(range(len(front)), key=lambda k: front[k])
-            fmin = sorted_front[0].objectives[i]
-            fmax = sorted_front[len(front) - 1].objectives[i]
+        n_objs = len(front[0].objectives)
+        for i in range(n_objs):
+            mp = sorted(range(len(front)), key=lambda k: front[k].objectives[i])
+            fmin = front[mp[0]].objectives[i]
+            fmax = front[mp[len(front) - 1]].objectives[i]
 
-            front.sparsity[0] = I[len(front)] = math.inf
+            front[mp[0]].sparsity = front[mp[len(front) - 1]].sparsity = math.inf
             for j in range(1, len(front) - 1):
-                I[j] = I[j] + (sorted_front[j + 1].objectives[i] - sorted_front[j - 1].objectives[i]) / (fmax - fmin)
+                front[mp[j]].sparsity = front[mp[j]].sparsity + (front[mp[j + 1]].objectives[i] - front[mp[j - 1]].objectives[i]) / (fmax - fmin)
 
 def run(numberOfDecisionVariables, problem, comp_file, print_igd, print_x, print_y, show_graph):
     assert(numberOfDecisionVariables == problem.numberOfDecisionVariables)
