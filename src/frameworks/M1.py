@@ -101,6 +101,8 @@ class M1():
                 if k == 0:
                     # Initialize EMO’s population
                     Pt = lhs_to_solution(lhs(self.n_vars, samples=self.mi), self.n_objs, self.n_vars)
+                    for p in Pt:
+                        self.problem.evaluate(p)
                 else:
                     paretoFront.fastNonDominatedSort(Pk)
                     Pt = []
