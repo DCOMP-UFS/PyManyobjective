@@ -27,6 +27,13 @@ class Solution:
     self.sparsity                    = -1
     self.rank                        = -1
     
+  def __eq__(self, other):
+    if isinstance(other, Solution):
+      return self.decisionVariables == other.decisionVariables
+    return False
+  def __hash__(self):
+    return hash(tuple(self.decisionVariables))
+
   def clone(self):
     solution = Solution(self.numberOfObjectives,
                         self.numberOfDecisionVariables)
