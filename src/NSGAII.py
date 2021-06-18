@@ -46,7 +46,7 @@ class NSGAII(Algorithm):
 
       for f in self.paretoFront.getInstance().front:
         self.sparsity.compute(f)
-        ordered_front = sorted(f, key=lambda x: x.sparsity)
+        ordered_front = sorted(f, key=lambda x: x.sparsity, reverse=True)
         
         
         for solution in ordered_front:
