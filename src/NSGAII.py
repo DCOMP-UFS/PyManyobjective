@@ -32,6 +32,8 @@ class NSGAII(Algorithm):
       self.initializePopulation()
     else:
       self.population = initialPopulation
+      for individual in self.population:
+        self.problem.evaluate(individual)
     self.createOffspring()
 
     while self.evaluations < self.maxEvaluations:
