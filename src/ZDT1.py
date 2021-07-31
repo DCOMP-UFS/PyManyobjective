@@ -16,6 +16,8 @@ class ZDT1(Problem):
     lowerBounds = [0.0 for _ in range(numberOfDecisionVariables)]
     upperBounds = [1.0 for _ in range(numberOfDecisionVariables)]
 
+    self.decisionVariablesLimit = (lowerBounds, upperBounds)
+
   def evalG(self, solution):
     g = 0.0
     for i in range(1, solution.numberOfDecisionVariables):
