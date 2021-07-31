@@ -26,6 +26,8 @@ class Solution:
     self.numberOfViolatedConstraints = 0
     self.sparsity                    = -1
     self.rank                        = -1
+
+    self.evaluated = False
     
   def __eq__(self, other):
     if isinstance(other, Solution):
@@ -43,5 +45,7 @@ class Solution:
     
     for i, objective in enumerate(self.objectives):
       solution.objectives[i] = objective
+
+    solution.evaluated = self.evaluated
       
     return solution
