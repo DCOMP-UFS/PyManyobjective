@@ -1,5 +1,5 @@
 from tests.M1_test import run
-from ZDT1 import ZDT1
+from ZDT import ZDT1
 
 problem = ZDT1(numberOfDecisionVariables=10)
 
