@@ -38,7 +38,7 @@ def lhs_to_solution(A, numberOfObjectives, numberOfDecisionVariables):
         B.append(b)
     return B
 
-class SMO():
+class SMB():
     def __init__(self, problem, sample_size, t_max, t_parada, EMO):
         self.problem = problem  # objective function
         self.sample_size = sample_size  # sample size
