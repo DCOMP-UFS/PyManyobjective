@@ -26,6 +26,7 @@ class Solution:
     self.numberOfViolatedConstraints = 0
     self.sparsity                    = -1
     self.rank                        = -1
+    self.cluster                     = -1
 
     self.evaluated = False
     
