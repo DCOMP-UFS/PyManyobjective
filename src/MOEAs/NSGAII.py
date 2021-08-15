@@ -6,7 +6,7 @@ Created on Thu May 13 15:56:56 2021
 @author: jad
 """
 
-from Algorithm import Algorithm
+from MOEAs.Algorithm import Algorithm
 
 # Classe do algoritmo NSGA-II
 class NSGAII(Algorithm):

@@ -5,7 +5,7 @@ Created on Thu May 13 15:57:12 2021
 
 @author: jad
 """
-from Problem import Problem
+from problems.Problem import Problem
 from Solution import Solution
 from ParetoFront import ParetoFront
 import math

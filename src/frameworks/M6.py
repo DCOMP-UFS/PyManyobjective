@@ -4,7 +4,7 @@ from pyDOE import lhs
 from smt.surrogate_models import KRG
 import sys
 
-from Problem import Problem
+from problems.Problem import Problem
 from Solution import Solution
 from ParetoFront import ParetoFront
 

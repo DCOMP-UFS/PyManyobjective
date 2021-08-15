@@ -1,4 +1,4 @@
-from Problem import Problem
+from problems.Problem import Problem
 from Solution import Solution
 import numpy as np
 import math
@@ -9,7 +9,7 @@ class ZDT1(Problem):
         super(ZDT1, self).__init__(numberOfObjectives,
                                 numberOfDecisionVariables,
                                 decisionVariablesLimit)
-        self.problem = "zdt abstract"
+        self.problem = "zdt1"
         
         lowerBounds = [0.0 for _ in range(numberOfDecisionVariables)]
         upperBounds = [1.0 for _ in range(numberOfDecisionVariables)]

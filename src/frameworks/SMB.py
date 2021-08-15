@@ -4,7 +4,7 @@ from pyDOE import lhs
 from sklearn.ensemble import RandomForestRegressor
 import sys
 
-from Problem import Problem
+from problems.Problem import Problem
 from Solution import Solution
 from ParetoFront import ParetoFront
 

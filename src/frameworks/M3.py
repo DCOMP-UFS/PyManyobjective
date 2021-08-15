@@ -4,7 +4,7 @@ from pyDOE import lhs
 from smt.surrogate_models import KRG
 import sys
 
-from Problem import Problem
+from problems.Problem import Problem
 from Solution import Solution
 from ParetoFront import ParetoFront
 
@@ -39,13 +39,13 @@ def lhs_to_solution(A, numberOfObjectives, numberOfDecisionVariables):
 
 class M3():
     def __init__(self, problem, EMO, sample_size, SEmax, k, alfa, R):
-        self.problem = problem # objective function
-        self.sample_size = sample_size # sample size
-        self.SEmax = SEmax # maximum high fidelity solution evaluations
-        self.k = k # number of points created for each reference direciton
-        self.alfa = alfa # fraction of samples used for metamodel
-        self.R = R # reference direction set
+        self.problem = problem # Objective function
         self.EMO = EMO
+        self.sample_size = sample_size # Sample size
+        self.SEmax = SEmax # Maximum high fidelity solution evaluations
+        self.k = k # Number of points created for each reference direciton
+        self.alfa = alfa # Fraction of samples used for metamodel
+        self.R = R # Reference direction set
 
     def dist_func(self, P, r):
         dists = []

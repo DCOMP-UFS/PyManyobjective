@@ -11,7 +11,7 @@ from Util import perpendicularDistance
 import numpy as np
 from numpy import random
 from sortedcontainers.sorteddict import SortedDict
-from Algorithm import Algorithm
+from MOEAs.Algorithm import Algorithm
 
 # Classe do algoritmo NSGA-II
 class NSGAIII(Algorithm):
