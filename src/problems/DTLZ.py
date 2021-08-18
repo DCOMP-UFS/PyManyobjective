@@ -25,6 +25,9 @@ class DTLZ1(Problem):
     upperBounds = [1.0 for _ in range(numberOfDecisionVariables)]
     
     self.decisionVariablesLimit = (lowerBounds, upperBounds)
+
+  def ideal_point(self):
+    return np.array([0.0 for _ in range(self.numberOfObjectives)])
   
   # Calcula os objetivos
   def evaluate(self, solution):

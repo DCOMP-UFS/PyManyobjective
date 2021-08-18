@@ -16,6 +16,9 @@ class ZDT1(Problem):
 
         self.decisionVariablesLimit = (lowerBounds, upperBounds)
 
+    def ideal_point(self):
+        return np.array([0.0, 0.0])
+
     def evalG(self, solution):
         g = 0.0
         for i in range(1, solution.numberOfDecisionVariables):

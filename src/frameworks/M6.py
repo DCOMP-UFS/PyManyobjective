@@ -77,8 +77,7 @@ class M6():
             for p in Pk:
                 X.append(p.decisionVariables)
 
-            ideal_point = np.array([0.0, 0.0])
-            fitness = self.kktpm.calc(X=np.array(X), problem=self.problem_np, ideal_point=ideal_point)
+            fitness = self.kktpm.calc(X=np.array(X), problem=self.problem_np, ideal_point=self.problem.ideal_point())
 
             eval = len(Pk)
 
