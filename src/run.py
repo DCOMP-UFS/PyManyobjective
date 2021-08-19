@@ -83,6 +83,8 @@ def get_problem_pymoo(problem, args_file):
     if problem == "ZDT6":
        return ZDT6_pymoo(args["n"])
 
+    args["n"] = args["m"] + args["k"] - 1
+
     if problem == "DTLZ1":
         return DTLZ1_pymoo(args["n"], args["m"])
     if problem == "DTLZ2":
@@ -146,19 +148,19 @@ def get_problem(problem, args_file):
         return ZDT6(args["n"])
 
     if problem == "DTLZ1": 
-        return DTLZ1(args["n"], args["m"])
+        return DTLZ1(args["m"], args["k"])
     if problem == "DTLZ2": 
-        return DTLZ2(args["n"], args["m"])
+        return DTLZ2(args["m"], args["k"])
     if problem == "DTLZ3": 
-        return DTLZ3(args["n"], args["m"])
+        return DTLZ3(args["m"], args["k"])
     if problem == "DTLZ4": 
-        return DTLZ4(args["n"], args["m"])
+        return DTLZ4(args["m"], args["k"])
     if problem == "DTLZ5": 
-        return DTLZ5(args["n"], args["m"])
+        return DTLZ5(args["m"], args["k"])
     if problem == "DTLZ6": 
-        return DTLZ6(args["n"], args["m"])
+        return DTLZ6(args["m"], args["k"])
     if problem == "DTLZ7": 
-        return DTLZ7(args["n"], args["m"])
+        return DTLZ7(args["m"], args["k"])
 
     print("unknown problem")
     return None
