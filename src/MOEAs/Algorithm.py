@@ -34,8 +34,6 @@ class Algorithm:
     self.evaluations             = 1
     self.paretoFront             = ParetoFront()
     self.offspring               = set()
-    self.lowerBound              = [ np.Inf for _ in range(problem.numberOfDecisionVariables)]
-    self.upperBound              = [-np.Inf for _ in range(problem.numberOfDecisionVariables)]
   
   def clonePopulation(self):
     population = set()

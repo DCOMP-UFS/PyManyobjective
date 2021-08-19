@@ -38,28 +38,20 @@ class ParetoFront:
       self.getInstance().front[-1].append(solution.clone())
   
   def dominance(self, s1,s2):
-    count = 0
-    count2 = s1.numberOfObjectives
+    count1 = 0
+    count2 = 0
     
-    for i in range(count2):
-      if s1.objectives[i] > s2.objectives[i]:
-        count += 1
-      else:
-        if s1.objectives[i] == s2.objectives[i]:
-          count2 -= 1
+    for i in range(s1.numberOfObjectives):
+      if s1.objectives[i] < s2.objectives[i]:
+        count1 += 1
+      elif s1.objectives[i] > s2.objectives[i]:
+        count2 += 1
           
-    if count == 0:
-        if count2 == 0:
-          return self.NON_DOMINATED
-        else:
-          return self.DOMINATED_BY
-    else:
-      if count > 0 and count < count2:
-        return self.NON_DOMINATED
-      else:
-        return self.DOMINATES
-      
-        
+    if count1 > 0 and count2 == 0:
+      return self.DOMINATED_BY
+    elif count1 == 0 and count2 > 0:
+      return self.DOMINATES
+    return self.NON_DOMINATED
     
   def fastNonDominatedSort(self, population):
     populationSize = len(population)
@@ -80,23 +72,19 @@ class ParetoFront:
         elif flagDominate == self.DOMINATES:
           iDominate[q].append(p)
           dominateMe[p] += 1
+      
+    for p in range(populationSize):
+      if dominateMe[p] == 0:
+        front[0].append(p)
     
-    for i in range(populationSize):
-      if dominateMe[i] == 0:
-          front[0].append(i)
-          population[i].rank = 0
-    
-    dominationRank = [(dominateMe[index],index) for index in range(len(dominateMe))]
-    dominationRank.sort()
-    
-    rank = 1
-    i    = 1
-    for i in range(len(dominationRank)):
-      dom, index = dominationRank[i]
-      if dominationRank[i] > dominationRank[i-1]:
-        rank += 1
-      if dom > 0:
-        front[rank].append(index)
+    rank = 0
+    while len(front[rank]) > 0:
+      for p in front[rank]:
+        for q in iDominate[p]:
+          dominateMe[q] -= 1
+          if dominateMe[q] == 0:
+            front[rank + 1].append(q)
+      rank += 1
 
     self.clearFront()
     
