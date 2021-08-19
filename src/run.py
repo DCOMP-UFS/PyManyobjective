@@ -3,9 +3,9 @@ import json
 from MOEAs.NSGAII import *
 from MOEAs.MRGA import *
 
-from PolynomialMutation import PolynomialMutation
+from mutations.PolynomialMutation import PolynomialMutation
 
-from SBXCrossover import SBXCrossover
+from crossovers.SBXCrossover import SBXCrossover
 
 from CrowdingDistance import CrowdingDistance
 
