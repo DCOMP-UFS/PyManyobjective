@@ -7,7 +7,7 @@ from mutations.PolynomialMutation import PolynomialMutation
 
 from crossovers.SBXCrossover import SBXCrossover
 
-from CrowdingDistance import CrowdingDistance
+from sparsities.CrowdingDistance import CrowdingDistance
 
 from BinaryTournament import BinaryTournament
 
