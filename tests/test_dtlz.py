@@ -1,4 +1,4 @@
-from DTLZ import DTLZ1, DTLZ2, DTLZ3, DTLZ4, DTLZ5, DTLZ6, DTLZ7
+from src.problems.DTLZ import DTLZ1, DTLZ2, DTLZ3, DTLZ4, DTLZ5, DTLZ6, DTLZ7
 
 from pymoo.problems.many.dtlz import DTLZ1 as DTLZ1_pymoo
 from pymoo.problems.many.dtlz import DTLZ2 as DTLZ2_pymoo
@@ -9,7 +9,7 @@ from pymoo.problems.many.dtlz import DTLZ6 as DTLZ6_pymoo
 from pymoo.problems.many.dtlz import DTLZ7 as DTLZ7_pymoo
 
 from pyDOE import lhs
-from Solution import Solution
+from src.Solution import Solution
 
 def lhs_to_solution(A, numberOfObjectives, numberOfDecisionVariables):
     B = list()

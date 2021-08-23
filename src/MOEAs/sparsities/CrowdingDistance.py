@@ -6,7 +6,7 @@ Created on Thu May 13 15:57:13 2021
 @author: jad
 """
 
-from sparsities.Sparsity import Sparsity
+from src.MOEAs.sparsities.Sparsity import Sparsity
 
 # Classe de crowding distance
 class CrowdingDistance(Sparsity):

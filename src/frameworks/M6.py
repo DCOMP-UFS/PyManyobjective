@@ -4,9 +4,9 @@ from pyDOE import lhs
 from smt.surrogate_models import KRG
 import sys
 
-from problems.Problem import Problem
-from Solution import Solution
-from ParetoFront import ParetoFront
+from src.problems.Problem import Problem
+from src.Solution import Solution
+from src.ParetoFront import ParetoFront
 
 # manage Kriging input/output
 class SM_QF_layer(Problem):

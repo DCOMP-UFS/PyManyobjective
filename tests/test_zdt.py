@@ -1,4 +1,4 @@
-from ZDT import ZDT1, ZDT3, ZDT6
+from src.ZDT import ZDT1, ZDT3, ZDT6
 
 from pymoo.problems.multi.zdt import ZDT1 as ZDT1_pymoo
 from pymoo.problems.multi.zdt import ZDT2 as ZDT2_pymoo
@@ -6,7 +6,7 @@ from pymoo.problems.multi.zdt import ZDT3 as ZDT3_pymoo
 from pymoo.problems.multi.zdt import ZDT6 as ZDT6_pymoo
 
 from pyDOE import lhs
-from Solution import Solution
+from src.Solution import Solution
 
 def lhs_to_solution(A, numberOfObjectives, numberOfDecisionVariables):
     B = list()

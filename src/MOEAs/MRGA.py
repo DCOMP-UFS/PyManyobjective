@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from MOEAs.Algorithm import Algorithm
+from src.MOEAs.Algorithm import Algorithm
 import numpy as np
 
 # Classe do algoritmo NSGA-II

@@ -6,7 +6,7 @@ Created on Thu May 13 15:57:21 2021
 @author: jad
 """
 
-from crossovers.Crossover import Crossover
+from src.MOEAs.crossovers.Crossover import Crossover
 from numpy import random
 import numpy as np
 

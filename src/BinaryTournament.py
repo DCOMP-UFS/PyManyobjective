@@ -6,7 +6,7 @@ Created on Thu May 13 15:57:22 2021
 @author: jad
 """
 
-from NaryTournament import NaryTournament
+from src.NaryTournament import NaryTournament
 
 # Classe de torneio binário
 class BinaryTournament(NaryTournament):

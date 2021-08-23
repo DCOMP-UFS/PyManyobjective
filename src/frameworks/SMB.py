@@ -4,9 +4,9 @@ from pyDOE import lhs
 from sklearn.ensemble import RandomForestRegressor
 import sys
 
-from problems.Problem import Problem
-from Solution import Solution
-from ParetoFront import ParetoFront
+from src.problems.Problem import Problem
+from src.Solution import Solution
+from src.ParetoFront import ParetoFront
 
 class Scikit_layer(Problem):
     def __init__(self, SMs, numberOfObjectives, numberOfDecisionVariables, decisionVariablesLimit=None):
