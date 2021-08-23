@@ -26,7 +26,17 @@ class Solution:
     self.numberOfViolatedConstraints = 0
     self.sparsity                    = -1
     self.rank                        = -1
+    self.cluster                     = -1
+
+    self.evaluated = False
     
+  def __eq__(self, other):
+    if isinstance(other, Solution):
+      return self.decisionVariables == other.decisionVariables
+    return False
+  def __hash__(self):
+    return hash(tuple(self.decisionVariables))
+
   def clone(self):
     solution = Solution(self.numberOfObjectives,
                         self.numberOfDecisionVariables)
@@ -36,5 +46,7 @@ class Solution:
     
     for i, objective in enumerate(self.objectives):
       solution.objectives[i] = objective
+
+    solution.evaluated = self.evaluated
       
     return solution

@@ -5,6 +5,7 @@ Created on Fri Nov 20 00:32:09 2020
 @author: jadso
 """
 
+
 class ParetoFront:
   DOMINATES = 1
   DOMINATED_BY = -1
@@ -18,42 +19,39 @@ class ParetoFront:
       return self.paretoFront
     else:
       return self.paretoFront
-
-  def addSolution(self, solution):
-    self.getInstance().front.append(solution)
+  
+  def getFront(self, index):
+    if index < self.size():
+      return self.getInstance().front[index]
+    else:
+      return list()
   
   def size(self):
     return len(self.getInstance().front)
   
   def clearFront(self):
     self.getInstance().front.clear()
-    
-  def contains(self, solution):
-    return solution in self.getInstance().front
+  
+  def addAll(self, solutionList):
+    self.getInstance().front.append(list())
+    for solution in solutionList:
+      self.getInstance().front[-1].append(solution.clone())
   
   def dominance(self, s1,s2):
-    count = 0
-    count2 = s1.numberOfObjectives
+    count1 = 0
+    count2 = 0
     
-    for i in range(count2):
-      if s1.objectives[i] > s2.objectives[i]:
-        count += 1
-      else:
-        if s1.objectives[i] == s2.objectives[i]:
-          count2 -= 1
+    for i in range(s1.numberOfObjectives):
+      if s1.objectives[i] < s2.objectives[i]:
+        count1 += 1
+      elif s1.objectives[i] > s2.objectives[i]:
+        count2 += 1
           
-    if count == 0:
-        if count2 == 0:
-          return self.NON_DOMINATED
-        else:
-          return self.DOMINATED_BY
-    else:
-      if count > 0 and count < count2:
-        return self.NON_DOMINATED
-      else:
-        return self.DOMINATES
-      
-        
+    if count1 > 0 and count2 == 0:
+      return self.DOMINATED_BY
+    elif count1 == 0 and count2 > 0:
+      return self.DOMINATES
+    return self.NON_DOMINATED
     
   def fastNonDominatedSort(self, population):
     populationSize = len(population)
@@ -74,31 +72,31 @@ class ParetoFront:
         elif flagDominate == self.DOMINATES:
           iDominate[q].append(p)
           dominateMe[p] += 1
+      
+    for p in range(populationSize):
+      if dominateMe[p] == 0:
+        front[0].append(p)
     
-    for i in range(populationSize):
-      if dominateMe[i] == 0:
-          front[0].append(i)
-          population[i].rank = 0
-    
-    
-    i = 0
-    while len(front[i]) > 0:
-      i += 1
-      for p in front[i-1]:
+    rank = 0
+    while len(front[rank]) > 0:
+      for p in front[rank]:
         for q in iDominate[p]:
           dominateMe[q] -= 1
           if dominateMe[q] == 0:
-            front[i].append(q)
-            population[q].rank = i
+            front[rank + 1].append(q)
+      rank += 1
 
     self.clearFront()
     
+    solutionList = list()
     for i in front[0]:
-      self.addSolution(population[i].objectives)
+      solutionList.append(population[i].clone())
       
-    fronts = list()
-    for f in front:
-      if len(f) > 0:
-        fronts.append([population[i] for i in f])
+    self.addAll(solutionList)
 
-    return fronts
+    for i in range(1, len(front)):
+      if len(front[i]) > 0:
+        solutionList = list()
+        for j in front[i]:
+          solutionList.append(population[j].clone())
+        self.addAll(solutionList)
