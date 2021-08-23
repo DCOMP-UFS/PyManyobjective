@@ -6,7 +6,7 @@ Created on Thu May 13 15:57:24 2021
 @author: jad
 """
 
-from Selection import Selection
+from src.Selection import Selection
 from numpy import random
 
 # Classe de torneio binário

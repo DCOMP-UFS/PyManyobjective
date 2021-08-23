@@ -1,24 +1,24 @@
 import json
 
-from MOEAs.NSGAII import *
-from MOEAs.MRGA import *
+from src.MOEAs.NSGAII import *
+from src.MOEAs.MRGA import *
 
-from mutations.PolynomialMutation import PolynomialMutation
+from src.MOEAs.mutations.PolynomialMutation import PolynomialMutation
 
-from crossovers.SBXCrossover import SBXCrossover
+from src.MOEAs.crossovers.SBXCrossover import SBXCrossover
 
-from CrowdingDistance import CrowdingDistance
+from src.MOEAs.sparsities.CrowdingDistance import CrowdingDistance
 
-from BinaryTournament import BinaryTournament
+from src.BinaryTournament import BinaryTournament
 
-from frameworks.M1 import M1
-from frameworks.M3 import M3
-from frameworks.M6 import M6
-from frameworks.SMO import SMO
-from frameworks.SMB import SMB
+from src.frameworks.M1 import M1
+from src.frameworks.M3 import M3
+from src.frameworks.M6 import M6
+from src.frameworks.SMO import SMO
+from src.frameworks.SMB import SMB
 
-from problems.ZDT import *
-from problems.DTLZ import *
+from src.problems.ZDT import *
+from src.problems.DTLZ import *
 from pymoo.problems.multi.zdt import ZDT1 as ZDT1_pymoo
 from pymoo.problems.multi.zdt import ZDT3 as ZDT3_pymoo
 from pymoo.problems.multi.zdt import ZDT6 as ZDT6_pymoo

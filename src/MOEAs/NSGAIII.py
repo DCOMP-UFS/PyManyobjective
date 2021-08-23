@@ -6,12 +6,12 @@ Created on Thu May 13 15:56:58 2021
 @author: jad
 """
 
-from Util import ReferencePoint
-from Util import perpendicularDistance
+from src.Util import ReferencePoint
+from src.Util import perpendicularDistance
 import numpy as np
 from numpy import random
 from sortedcontainers.sorteddict import SortedDict
-from MOEAs.Algorithm import Algorithm
+from src.MOEAs.Algorithm import Algorithm
 
 # Classe do algoritmo NSGA-II
 class NSGAIII(Algorithm):

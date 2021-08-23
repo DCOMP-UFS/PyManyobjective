@@ -8,7 +8,7 @@ Created on Thu May 13 15:57:25 2021
 
 from numpy import random
 import numpy as np
-from mutations.Mutation import Mutation
+from src.MOEAs.mutations.Mutation import Mutation
 
 # Classe de mutação polinomial (conforme implementação presente no JMetal)
 class PolynomialMutation(Mutation):

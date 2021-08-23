@@ -5,7 +5,7 @@ Created on Sun Nov 29 18:47:19 2020
 @author: jadso
 """
 
-from Solution import Solution
+from src.Solution import Solution
 from numpy import random
 
 # Classe abstrata dos problemas

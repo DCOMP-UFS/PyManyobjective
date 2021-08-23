@@ -7,7 +7,7 @@ Created on Fri Jan 22 07:26:33 2021
 import warnings
 warnings.simplefilter(action='ignore', category=RuntimeWarning)
 
-from ParetoFront import ParetoFront
+from src.ParetoFront import ParetoFront
 import numpy as np
 
 # Classe abstrata do algoritmos

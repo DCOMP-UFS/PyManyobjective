@@ -1,5 +1,5 @@
-from problems.Problem import Problem
-from Solution import Solution
+from src.problems.Problem import Problem
+from src.Solution import Solution
 import numpy as np
 import math
 
