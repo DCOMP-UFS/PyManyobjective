@@ -11,13 +11,8 @@ from src.ParetoFront import ParetoFront
 # manage Kriging input/output
 class SM_QF_layer(Problem):
     def __init__(self, SMs, numberOfObjectives, numberOfDecisionVariables, decisionVariablesLimit=None):
-        super(SM_QF_layer, self).__init__(numberOfObjectives, numberOfDecisionVariables, decisionVariablesLimit=None)
+        super(SM_QF_layer, self).__init__(numberOfObjectives, numberOfDecisionVariables, decisionVariablesLimit)
         self.SMs = SMs
-
-        lowerBounds = [0.0 for _ in range(numberOfDecisionVariables)]
-        upperBounds = [1.0 for _ in range(numberOfDecisionVariables)]
-    
-        self.decisionVariablesLimit = (lowerBounds, upperBounds)
 
     def evaluate(self, solution):
         objectives = []
@@ -26,7 +21,10 @@ class SM_QF_layer(Problem):
         solution.objectives = objectives
         return solution
 
-def lhs_to_solution(A, numberOfObjectives, numberOfDecisionVariables):
+def lhs_to_solution(A, limits, numberOfObjectives, numberOfDecisionVariables):
+    for i in range(numberOfDecisionVariables):
+        A[:, i] = A[:, i] * (limits[1][i] - limits[0][i]) + limits[0][i]
+
     B = list()
     for a in A:
         b = Solution(numberOfObjectives, numberOfDecisionVariables)
@@ -36,6 +34,20 @@ def lhs_to_solution(A, numberOfObjectives, numberOfDecisionVariables):
         b.decisionVariables = decisionVariables
         B.append(b)
     return B
+
+def check_limits(solutions, limits):
+    print("-----------------------------------")
+    print("checking...")
+    print("-----------------------------------")
+    j = 0
+    for solution in solutions:
+        for i in range(len(limits[0])):
+            if (solution.decisionVariables[i] < limits[0][i] or solution.decisionVariables[i] > limits[1][i]):
+                print(j, solution.decisionVariables[i])
+                print(limits[0][i], limits[1][i])
+                print("OOOPPSS!!")
+                raise Exception
+        j += 1
 
 class M1():
     def __init__(self, problem, EMO, sample_size, tau, SEmax):
@@ -49,14 +61,14 @@ class M1():
         t = 0
         k = (t % self.tau)
         Pt = []
-        Pk = lhs_to_solution(lhs(self.problem.numberOfDecisionVariables, samples=self.sample_size), self.problem.numberOfObjectives, self.problem.numberOfDecisionVariables)  # Initialize surrogate model's training set
+        Pk = lhs_to_solution(lhs(self.problem.numberOfDecisionVariables, samples=self.sample_size), self.problem.decisionVariablesLimit, self.problem.numberOfObjectives, self.problem.numberOfDecisionVariables)  # Initialize surrogate model's training set
         paretoFront = ParetoFront()
 
         eval = 0
         while (eval < self.SEmax):
             if t % self.tau == 0:
                 Pk = list(set(Pk + Pt))
-
+                check_limits(Pk, self.problem.decisionVariablesLimit)
                 # High-fidelity evaluations (functions)
                 for p in Pk:
                     self.problem.evaluate(p)
@@ -84,9 +96,7 @@ class M1():
 
                 if k == 0:
                     # Initialize EMO’s population
-                    Pt = lhs_to_solution(lhs(self.problem.numberOfDecisionVariables, samples=self.EMO.populationSize), self.problem.numberOfObjectives, self.problem.numberOfDecisionVariables)
-                    for p in Pt:
-                        self.problem.evaluate(p)
+                    Pt = lhs_to_solution(lhs(self.problem.numberOfDecisionVariables, samples=self.EMO.populationSize), self.problem.decisionVariablesLimit, self.problem.numberOfObjectives, self.problem.numberOfDecisionVariables)
                 else:
                     paretoFront.fastNonDominatedSort(Pk)
                     Pt = []
