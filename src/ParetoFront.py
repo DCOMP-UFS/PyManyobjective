@@ -7,9 +7,9 @@ Created on Fri Nov 20 00:32:09 2020
 
 
 class ParetoFront:
-  DOMINATES = 1
-  DOMINATED_BY = -1
-  NON_DOMINATED = 0
+  W =  1
+  L = -1
+  D =  0
   paretoFront = None
   front = list()
 
@@ -33,43 +33,42 @@ class ParetoFront:
     self.getInstance().front.clear()
   
   def addAll(self, solutionList):
-    self.getInstance().front.append(list())
-    for solution in solutionList:
-      self.getInstance().front[-1].append(solution.clone())
+    self.getInstance().front.append(solutionList)
   
-  def dominance(self, s1,s2):
+  def dominance(self, s1, s2):
     count1 = 0
     count2 = 0
     
     for i in range(s1.numberOfObjectives):
       if s1.objectives[i] < s2.objectives[i]:
         count1 += 1
-      elif s1.objectives[i] > s2.objectives[i]:
+      elif s2.objectives[i] < s1.objectives[i]:
         count2 += 1
+        break
           
     if count1 > 0 and count2 == 0:
-      return self.DOMINATED_BY
+      return self.W
     elif count1 == 0 and count2 > 0:
-      return self.DOMINATES
-    return self.NON_DOMINATED
+      return self.L
+    return self.D
     
   def fastNonDominatedSort(self, population):
     populationSize = len(population)
     dominateMe     = [0 for _ in range(populationSize)]
     iDominate      = [list() for _ in range(populationSize)]
-    front          = [list() for _ in range(populationSize+1)]
+    front          = [list() for _ in range(populationSize + 1)]
     
     for p in range(populationSize):
       iDominate[p]  = list()
       dominateMe[p] = 0
 
-    for p in range(populationSize-1):
-      for q in range(p+1, populationSize):
+    for p in range(populationSize - 1):
+      for q in range(p + 1, populationSize):
         flagDominate = self.dominance(population[p], population[q])
-        if flagDominate == self.DOMINATED_BY:
+        if flagDominate == self.W:
           iDominate[p].append(q)
           dominateMe[q] += 1
-        elif flagDominate == self.DOMINATES:
+        elif flagDominate == self.L:
           iDominate[q].append(p)
           dominateMe[p] += 1
       
@@ -87,14 +86,8 @@ class ParetoFront:
       rank += 1
 
     self.clearFront()
-    
-    solutionList = list()
-    for i in front[0]:
-      solutionList.append(population[i].clone())
-      
-    self.addAll(solutionList)
 
-    for i in range(1, len(front)):
+    for i in range(len(front)):
       if len(front[i]) > 0:
         solutionList = list()
         for j in front[i]:
