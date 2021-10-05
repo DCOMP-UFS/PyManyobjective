@@ -27,20 +27,8 @@ class PolynomialMutation(Mutation):
     return value
     
   def mutate(self, individual, lowerBound, upperBound):
-    rnd = 0.0
-    delta1 = 0.0
-    delta2 = 0.0
-    mutPow = 0.0
-    deltaq = 0.0
-    y = 0.0
-    yl = 0.0
-    yu = 0.0
-    val = 0.0
-    xy = 0.0
-    
     for i in range(individual.numberOfDecisionVariables):
-      rand = random.randint(low=0,high=10000)/10000
-      if rand <= self.mutationProbability:
+      if random.random() <= self.mutationProbability:
         y = individual.decisionVariables[i]
         yl = lowerBound[i]
         yu = upperBound[i]
@@ -50,26 +38,26 @@ class PolynomialMutation(Mutation):
         else:
           delta1 = (y - yl) / (yu - yl)
           delta2 = (yu - y) / (yu - yl)
-          rnd = random.randint(low=0,high=10000)/10000
+          deltaq = 0.0
+          rand = random.random()
           mutPow = 1.0 / (self.distributionIndex + 1.0)
           
-          if rnd <= 0.5:
+          if rand < 0.5:
             xy = 1.0 - delta1
             
-            val = 2.0 * rnd
-            val += (1.0 - 2.0*rnd)*(np.power(xy, self.distributionIndex+1.0))
+            val = 2.0 * rand
+            val += (1.0 - 2.0 * rand) * xy ** (self.distributionIndex + 1.0)
               
-            deltaq = np.power(val, mutPow) - 1.0
+            deltaq = val ** mutPow - 1.0
           else:
             xy = 1.0 - delta2
             
-            val = 2.0 * (1.0 - rnd)
-            val += 2.0*(rnd - 0.5) * (np.power(xy, self.distributionIndex+1.0))
+            val = 2.0 * (1.0 - rand)
+            val += 2.0 * (rand - 0.5) * xy ** (self.distributionIndex + 1.0)
             
-            deltaq = 1.0 - np.power(val, mutPow)
+            deltaq = 1.0 - val ** mutPow
           
-          y = y + deltaq*(yu - yl)
-          
+          y = y + deltaq * (yu - yl)
           y = self.checkBounds(y, yl, yu)
           
         individual.decisionVariables[i] = y
