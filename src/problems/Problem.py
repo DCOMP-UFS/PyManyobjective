@@ -14,14 +14,14 @@ class Problem(object):
   def __init__(self, numberOfObjectives,
                numberOfDecisionVariables,
                decisionVariablesLimit=None):
-    self.decisionVariablesLimit    = list()
     self.numberOfDecisionVariables = numberOfDecisionVariables
     self.numberOfObjectives        = numberOfObjectives
     self.avaliations               = 0
     
-    if not decisionVariablesLimit is None:
-      for i in decisionVariablesLimit:
-        self.decisionVariablesLimit.append(i)
+    if decisionVariablesLimit is None:
+      raise Exception
+    else:
+      self.decisionVariablesLimit = decisionVariablesLimit
     
   # Metódos concretos
   
