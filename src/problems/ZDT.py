@@ -6,15 +6,15 @@ import math
 class ZDT1(Problem):
     def __init__(self, numberOfDecisionVariables, decisionVariablesLimit=None):
         numberOfObjectives = 2
+
+        lowerBounds = [0.0 for _ in range(numberOfDecisionVariables)]
+        upperBounds = [1.0 for _ in range(numberOfDecisionVariables)]
+        decisionVariablesLimit = (lowerBounds, upperBounds)
+
         super(ZDT1, self).__init__(numberOfObjectives,
                                 numberOfDecisionVariables,
                                 decisionVariablesLimit)
         self.problem = "zdt1"
-        
-        lowerBounds = [0.0 for _ in range(numberOfDecisionVariables)]
-        upperBounds = [1.0 for _ in range(numberOfDecisionVariables)]
-
-        self.decisionVariablesLimit = (lowerBounds, upperBounds)
 
     def ideal_point(self):
         return np.array([0.0, 0.0])
