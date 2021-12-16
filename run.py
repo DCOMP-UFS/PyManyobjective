@@ -2,6 +2,7 @@ import json
 
 from src.MOEAs.NSGAII import *
 from src.MOEAs.MRGA import *
+from src.MOEAs.GA import *
 
 from src.MOEAs.mutations.PolynomialMutation import PolynomialMutation
 
@@ -126,6 +127,8 @@ def get_MOEA(MOEA, args_file):
     with open(args_file) as fargs:
         args = json.load(fargs)
 
+    if MOEA == "GA":
+        return GA(None, args["maxEvaluations"], args["populationSize"], args["offspringSize"], None, None, None, None)
     if MOEA == "NSGAII": 
         return NSGAII(None, args["maxEvaluations"], args["populationSize"], args["offspringSize"], None, None, None, None)
     if MOEA == "MRGA": 
