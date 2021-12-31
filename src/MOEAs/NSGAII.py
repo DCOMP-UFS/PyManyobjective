@@ -7,6 +7,8 @@ Created on Thu May 13 15:56:56 2021
 """
 
 from src.MOEAs.Algorithm import Algorithm
+import numpy as np
+from src.Population import Population
 
 # Classe do algoritmo NSGA-II
 class NSGAII(Algorithm):
@@ -32,28 +34,34 @@ class NSGAII(Algorithm):
       self.initializePopulation()
     else:
       self.population = initialPopulation
-      for individual in self.population:
-        self.problem.evaluate(individual)
+      
+    self.problem.evaluate(self.population)
     self.createOffspring()
 
     while self.evaluations < self.maxEvaluations:
       if (self.evaluations % 1000) == 0:
         print("Evaluations: " + str(self.evaluations) + " de " + str(self.maxEvaluations) + "...")
       
-      mixedPopulation = self.population.union(self.offspring)
-      self.population.clear()
-      self.offspring.clear()
-      
-      self.paretoFront.fastNonDominatedSort(list(mixedPopulation))
+      self.population.join(self.offspring)
 
-      for f in self.paretoFront.getInstance().front:
-        self.sparsity.compute(f)
-        ordered_front = sorted(f, key=lambda x: x.sparsity, reverse=True)
-        
-        
-        for solution in ordered_front:
-          if len(self.population) < self.populationSize:
-            self.population.add(solution.clone())
+      fronts = self.paretoFront.fastNonDominatedSort(self.population)
+      fronts_order = np.argsort(fronts)
+
+      self.population.decisionVariables = self.population.decisionVariables[fronts_order]
+      self.population.objectives = self.population.objectives[fronts_order]
+
+      last = fronts == fronts[fronts_order][:self.populationSize][-1]
+      last_population = Population(self.problem.numberOfObjectives, self.problem.numberOfDecisionVariables)
+      last_population.decisionVariables = self.population.decisionVariables[last]
+      last_population.objectives = self.population.objectives[last]
+
+      crowding_distance = self.sparsity.compute(last_population) * -1
+      last_order = np.argsort(crowding_distance)
+      self.population.decisionVariables[last] = self.population.decisionVariables[last][last_order]
+      self.population.objectives[last] = self.population.objectives[last][last_order]
+
+      self.population.decisionVariables = self.population.decisionVariables[:self.populationSize]
+      self.population.objectives = self.population.objectives[:self.populationSize]
       
-      for i in range(int(self.populationSize/2)):
-        self.evolute()
+      self.offspring = Population(self.problem.numberOfObjectives, self.problem.numberOfDecisionVariables)
+      self.evolute()

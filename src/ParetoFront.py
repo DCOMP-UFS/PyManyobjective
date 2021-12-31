@@ -5,36 +5,13 @@ Created on Fri Nov 20 00:32:09 2020
 @author: jadso
 """
 
+import numpy as np
 
 class ParetoFront:
-  W =  1
+  W = 1
   L = -1
-  D =  0
-  paretoFront = None
-  front = list()
+  D = 0
 
-  def getInstance(self):
-    if self.paretoFront is None:
-      self.paretoFront = ParetoFront()
-      return self.paretoFront
-    else:
-      return self.paretoFront
-  
-  def getFront(self, index):
-    if index < self.size():
-      return self.getInstance().front[index]
-    else:
-      return list()
-  
-  def size(self):
-    return len(self.getInstance().front)
-  
-  def clearFront(self):
-    self.getInstance().front.clear()
-  
-  def addAll(self, solutionList):
-    self.getInstance().front.append(solutionList)
-  
   def dominance(self, s1, s2):
     count1 = 0
     count2 = 0
@@ -53,43 +30,38 @@ class ParetoFront:
     return self.D
     
   def fastNonDominatedSort(self, population):
-    populationSize = len(population)
-    dominateMe     = [0 for _ in range(populationSize)]
-    iDominate      = [list() for _ in range(populationSize)]
-    front          = [list() for _ in range(populationSize + 1)]
+    X = population.decisionVariables
+    Y = np.copy(population.objectives)
+
+    times_dominated = np.zeros(X.shape[0])
+    dominated = np.full((X.shape[0], X.shape[0]), False)
+    fronts = np.ones(X.shape[0])
+    for i in range(X.shape[0]):
+      possibly_better = np.any(Y < Y[i], axis=1)
+      possibly_worse = np.any(Y > Y[i], axis=1)
+
+      better = np.logical_and(possibly_better, ~possibly_worse)
+      worse = np.logical_and(possibly_worse, ~possibly_better)
+
+      times_dominated[i] += np.sum(better)
+      dominated[i] = worse
+
+    cur_not_dominated = times_dominated <= 0
+    fronts[cur_not_dominated] = 0
+    cur_front = 0
+    visited = np.full(X.shape[0], False)
+    while np.sum(cur_not_dominated) > 0:
+      ac = np.sum(dominated[cur_not_dominated], axis=0)
+      times_dominated -= ac
+      visited = np.logical_or(visited, cur_not_dominated)
+      cur_not_dominated = times_dominated <= 0
+      cur_not_dominated = np.logical_and(cur_not_dominated, ~visited)
+      fronts[cur_not_dominated] = cur_front + 1
+      cur_front += 1
     
-    for p in range(populationSize):
-      iDominate[p]  = list()
-      dominateMe[p] = 0
-
-    for p in range(populationSize - 1):
-      for q in range(p + 1, populationSize):
-        flagDominate = self.dominance(population[p], population[q])
-        if flagDominate == self.W:
-          iDominate[p].append(q)
-          dominateMe[q] += 1
-        elif flagDominate == self.L:
-          iDominate[q].append(p)
-          dominateMe[p] += 1
-      
-    for p in range(populationSize):
-      if dominateMe[p] == 0:
-        front[0].append(p)
-    
-    rank = 0
-    while len(front[rank]) > 0:
-      for p in front[rank]:
-        for q in iDominate[p]:
-          dominateMe[q] -= 1
-          if dominateMe[q] == 0:
-            front[rank + 1].append(q)
-      rank += 1
-
-    self.clearFront()
-
-    for i in range(len(front)):
-      if len(front[i]) > 0:
-        solutionList = list()
-        for j in front[i]:
-          solutionList.append(population[j].clone())
-        self.addAll(solutionList)
+    return fronts
+  
+  def getBest(self, population):
+    best_objectives = np.min(population.objectives, axis=0)
+    sum_equals = np.sum(population.objectives == best_objectives, axis=1)
+    return population.decisionVariables[np.argsort(sum_equals)[0]]

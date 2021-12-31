@@ -1,26 +1,14 @@
 import math
 import random
 import numpy as np
+import scipy
 from pyDOE import lhs
 from pyearth import Earth
 
 from src.problems.Problem import Problem
-from src.Solution import Solution
 from src.ParetoFront import ParetoFront
-
-def lhs_to_solution(A, limits, numberOfObjectives, numberOfDecisionVariables):
-    for i in range(numberOfDecisionVariables):
-        A[:, i] = A[:, i] * (limits[1][i] - limits[0][i]) + limits[0][i]
-
-    B = list()
-    for a in A:
-        b = Solution(numberOfObjectives, numberOfDecisionVariables)
-        decisionVariables = []
-        for x in a:
-            decisionVariables.append(x)
-        b.decisionVariables = decisionVariables
-        B.append(b)
-    return B
+from src.Population import Population
+from src.Population import genPopulation
 
 def check_limits(solutions, limits):
     print("-----------------------------------")
@@ -57,93 +45,52 @@ class MARSAOP():
         assert(self.ww >= 0 and self.ww <= 1)
         assert(self.wv + self.ww == 1)
 
-    def generate_candidate_points(self, probability, bestSolution):
+    def generate_candidate_points(self, probability, bestVariables):
         z = []
 
-        for k in range(self.m):
-            r = []
-            index = []
-            for i in range(self.d):
-                r.append(random.random())
-                if (r[i] < probability):
-                    index.append(i)
-            if len(index) == 0:
-                index.append(random.randrange(self.d))
+        random_probs = np.random.random((self.m, self.d))
+        do_change = random_probs < probability
 
-            zk = bestSolution.clone()
-            for i in range(len(index)):
-                zk.decisionVariables[i] += random.gauss(0, self.variance * self.variance)
-                # repair
-                if zk.decisionVariables[i] < self.problem.decisionVariablesLimit[0][i]:
-                    zk.decisionVariables[i] = self.problem.decisionVariablesLimit[0][i]
-                elif zk.decisionVariables[i] > self.problem.decisionVariablesLimit[1][i]:
-                    zk.decisionVariables[i] = self.problem.decisionVariablesLimit[1][i]
-            z.append(zk)
+        without_change = np.sum(do_change, axis=1) == 0
+        selected_variables = np.random.randint(0, self.d, self.m)
+        do_change[without_change, selected_variables] = True
 
-        return z
+        change = np.random.normal(0, self.variance * self.variance, (self.m, self.d))
+
+        X = np.tile(bestVariables, (self.m, 1))
+        X[do_change] += change[do_change]
+
+        candidate_points = Population(self.problem.numberOfObjectives, self.problem.numberOfDecisionVariables)
+        candidate_points.decisionVariables = X
+
+        return candidate_points
 
     def select_evaluation_point(self, candidates, SM, D):
         Rn_min = None
         Rn_max = None
 
-        X = []
-        for p in candidates:
-            X.append(p.decisionVariables)
-        Rn_z = SM.predict(np.array(X))
-        for i in range(len(candidates)):
-            # compute Rn(z)min
-            if Rn_min == None or Rn_z[i] < Rn_min:
-                Rn_min = Rn_z[i]
-            # compute Rn(z)max
-            if Rn_max == None or Rn_z[i] > Rn_max:
-                Rn_max = Rn_z[i]
+        X = candidates.decisionVariables
+        Rn_z = SM.predict(X)
+        Rn_min = np.min(Rn_z)
+        Rn_max = np.max(Rn_z)
 
-        V = []
-        for i in range(len(candidates)):
-            if Rn_min == Rn_max:
-                V.append(1)
-            else:
-                v = (Rn_z[i] - Rn_min) / (Rn_max - Rn_z[i])
-                V.append(v)
+        V = np.zeros(candidates.shape[0])
+        can_div = Rn_min != Rn_max
+        V[~can_div] = 1
+        V[can_div] = (Rn_z[can_div] - Rn_min[can_div]) / (Rn_max[can_div] - Rn_min[can_div])
 
-        dis = []
-        dis_min = None
-        dis_max = None
-        for z in candidates:
-            z_dis = None
-            for i in range(len(D)):
-                calculated_dis = z.calc_dist(D[i])
-                if z_dis == None or calculated_dis < z_dis:
-                    z_dis = calculated_dis
+        all_dis = scipy.spatial.distance.cdist(X, D.decisionVariables)
+        dis = np.min(all_dis, axis=1)
+        dis_min = np.min(dis)
+        dis_max = np.max(dis)
 
-            if dis_min == None or z_dis < dis_min:
-                dis_min = z_dis
-            if dis_max == None or z_dis > dis_max:
-                dis_max = z_dis
+        W = np.zeros(candidates.shape[0])
+        can_div = dis_min != dis_max
+        W[~can_div] = 1
+        W[can_div] = (dis_max[can_div] - dis[can_div]) / (dis_max - dis_min)
 
-            dis.append(z_dis)
-
-        W = []
-        for i in range(len(candidates)):
-            if dis_min == dis_max:
-                W.append(1)
-            else:
-                w = (dis_max - dis[i]) / (dis_max - dis_min)
-                W.append(w)
-
-        S = []
-        for i in range(len(candidates)):
-            s = self.wv * V[i] + self.ww * W[i]
-            S.append(s)
-
-        s_min = None
-        best_z = None
-        for i in range(len(candidates)):
-            if s_min == None or S[i] < s_min:
-                s_min = S[i]
-                best_z = candidates[i]
-
-        return best_z
+        S = self.wv * V + self.ww * W
+        return X[np.argmin(S)]
 
     def update_variance(self):
         if self.T1 > self.thr1:
@@ -161,43 +108,36 @@ class MARSAOP():
         self.prob = min(20 / self.d, 1)
         assert(self.problem.numberOfObjectives == 1)
 
-        Pk = lhs_to_solution(lhs(self.problem.numberOfDecisionVariables, samples=self.n), self.problem.decisionVariablesLimit, self.problem.numberOfObjectives, self.problem.numberOfDecisionVariables)  # Initialize surrogate model's training set
+        Pk = genPopulation(self.problem, self.n)
         paretoFront = ParetoFront()
 
-        for p in Pk:
-            self.problem.evaluate(p)
+        self.problem.evaluate(Pk)
 
         for iterator in range(self.Gmax):
-            Fkm = []
-            for i in range(self.problem.numberOfObjectives):
-                Fkm.append([])
-                for p in Pk:
-                    Fkm[i].append(p.objectives[i])
-            X = []
-            for p in Pk:
-                X.append(p.decisionVariables)
+            Fkm = np.transpose(Pk.objectives)
+
+            X = Pk.decisionVariables
 
             SMs = []
             for i in range(self.problem.numberOfObjectives):
                 SM = Earth()
-                SM.fit(np.array(X), np.array(Fkm[i]))
+                SM.fit(X, Fkm[i])
                 SMs.append(SM)
 
-            bestSolution = Pk[0]
-            for i in range(1, self.n):
-                if self.paretoFront.dominance(Pk[i], bestSolution) == self.paretoFront.W:
-                    bestSolution = Pk[i]
+            bestVariables = paretoFront.getBest(Pk)
 
             cur_prob = self.prob * (1 - math.log(iterator + 1) / math.log(self.Gmax))
 
-            candidate_points = self.generate_candidate_points(cur_prob, bestSolution)
+            candidate_points = self.generate_candidate_points(cur_prob, bestVariables)
             promising_point = self.select_evaluation_point(candidate_points, SMs[0], Pk)
-            self.problem.evaluate(promising_point)
-            Pk.append(promising_point)
+            Pk.decisionVariables = np.concatenate(Pk.decisionVariables, np.array([promising_point]))
+            self.problem.evaluate(Pk)
             self.n += 1
             self.update_variance()
 
             #print(iterator)
 
-        paretoFront.fastNonDominatedSort(Pk)
-        return paretoFront.getInstance().front[0]
+        fronts = paretoFront.fastNonDominatedSort(Pk)
+        Pk.decisionVariables = Pk.decisionVariables[fronts == 0]
+        Pk.objectives = Pk.objectives[fronts == 0]
+        return Pk

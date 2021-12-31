@@ -7,6 +7,8 @@ Created on Thu May 13 15:56:56 2021
 """
 
 from src.MOEAs.Algorithm import Algorithm
+import numpy as np
+from src.Population import Population
 
 # Classe do algoritmo NSGA-II
 class GA(Algorithm):
@@ -33,21 +35,24 @@ class GA(Algorithm):
       self.initializePopulation()
     else:
       self.population = initialPopulation
-      for individual in self.population:
-        self.problem.evaluate(individual)
+      
+    self.problem.evaluate(self.population)
     self.createOffspring()
 
     while self.evaluations < self.maxEvaluations:
-      mixedPopulation = self.population.union(self.offspring)
-      self.population.clear()
-      self.offspring.clear()
-      
-      self.paretoFront.fastNonDominatedSort(list(mixedPopulation))
+      if (self.evaluations % 1000) == 0:
+        print("Evaluations: " + str(self.evaluations) + " de " + str(self.maxEvaluations) + "...")
 
-      for f in self.paretoFront.getInstance().front:
-        for solution in f:
-          if len(self.population) < self.populationSize:
-            self.population.add(solution.clone())
+      self.population.join(self.offspring)
+
+      fronts = self.paretoFront.fastNonDominatedSort(self.population)
+      fronts_order = np.argsort(fronts)
+
+      self.population.decisionVariables = self.population.decisionVariables[fronts_order]
+      self.population.objectives = self.population.objectives[fronts_order]
       
-      for i in range(int(self.populationSize/2)):
-        self.evolute()
+      self.population.decisionVariables = self.population.decisionVariables[:self.populationSize]
+      self.population.objectives = self.population.objectives[:self.populationSize]
+      
+      self.offspring = Population(self.problem.numberOfObjectives, self.problem.numberOfDecisionVariables)
+      self.evolute()

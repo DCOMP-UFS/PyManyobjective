@@ -36,6 +36,12 @@ from pymoo.indicators.kktpm import KKTPM
 
 from pathlib import Path
 
+import sys
+
+import numpy as np
+
+np.set_printoptions(threshold=sys.maxsize)
+
 def get_sparsity(sparsity):
     if sparsity == "CrowdingDistance":
         return CrowdingDistance()
@@ -204,12 +210,9 @@ def run(framework, problem, moea, crossover, mutation, selection, sparsity, n, f
 
     for i in range(n):
         P = Framework.run()
-        X = []
-        F = []
-        for p in P:
-            X.append(p.decisionVariables)
-            F.append(p.objectives)
-    
+        X = P.decisionVariables.tolist()
+        F = P.objectives.tolist()
+
         figd = get_performance_indicator("igd", np.array(pareto_front))
         igd = figd.calc(np.array(F))
 

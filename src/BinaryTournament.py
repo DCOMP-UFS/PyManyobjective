@@ -11,4 +11,4 @@ from src.NaryTournament import NaryTournament
 # Classe de torneio binário
 class BinaryTournament(NaryTournament):
   def __init__(self):
-    super(BinaryTournament, self).__init__(2)
+    super(BinaryTournament, self).__init__(50)

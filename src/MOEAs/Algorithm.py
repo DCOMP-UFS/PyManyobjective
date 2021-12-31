@@ -8,7 +8,9 @@ import warnings
 warnings.simplefilter(action='ignore', category=RuntimeWarning)
 
 from src.ParetoFront import ParetoFront
+from src.Population import Population, genPopulation
 import numpy as np
+import sys
 
 # Classe abstrata do algoritmos
 class Algorithm:
@@ -42,45 +44,36 @@ class Algorithm:
       
     return population
   
-  def evolute(self):
-    parent1 = self.selection.select(list(self.population.copy()))
-    parent2 = self.selection.select(list(self.population.copy()))
+  def evolute(self, evaluate=True):
+    parents1 = self.selection.select(self.population, self.problem)
+    parents2 = self.selection.select(self.population, self.problem)
     
-    lower = self.problem.decisionVariablesLimit[0]
-    upper = self.problem.decisionVariablesLimit[1]
+    lower = np.array(self.problem.decisionVariablesLimit[0])
+    upper = np.array(self.problem.decisionVariablesLimit[1])
     
-    children = self.crossover.crossover([parent1, parent2],lower,upper)
+    children1, children2 = self.crossover.crossover(parents1, parents2, lower, upper)
+    children = children1
+    children.join(children2)
+
+    self.mutation.mutate(children, lower, upper)
     
-    children[0] = self.mutation.mutate(children[0],lower,upper)
-    children[1] = self.mutation.mutate(children[1],lower,upper)
-    
-    for solution in children:
-      s = self.problem.evaluate(solution.clone())
-      self.offspring.add(s)
-      self.evaluations += 1
-      
+    self.offspring.join(children)
+
+    if evaluate:
+      self.problem.evaluate(self.offspring)
+
+    self.evaluations += parents1.decisionVariables.shape[0] + parents2.decisionVariables.shape[0]
       
   def initializePopulation(self):
-    self.population.clear()
-    solutionList = set()
-    
-    while len(solutionList) < self.populationSize:
-      newSolution = self.problem.generateSolution()
-      newSolution = self.problem.evaluate(newSolution) 
-      solutionList.add(newSolution)
-      self.evaluations += 1
-      
-    self.paretoFront.fastNonDominatedSort(list(solutionList))
-    for f in self.paretoFront.getInstance().front:
-      for solution in f:
-        self.population.add(solution)
-    
+    self.population = genPopulation(self.problem, self.populationSize)
   
   def createOffspring(self):
-    self.offspring.clear()
-    while len(self.offspring) < self.offSpringPopulationSize:
-      self.evolute()
+    self.offspring = Population(self.problem.numberOfObjectives, self.problem.numberOfDecisionVariables)
+    self.offspring.decisionVariables = np.zeros((0, self.problem.numberOfDecisionVariables))
+    while self.offspring.decisionVariables.shape[0] < self.offSpringPopulationSize:
+      self.evolute(evaluate=False)
+    self.problem.evaluate(self.offspring)
   
   # Classes abstratas
   def execute(self):
-    pass        
+    pass

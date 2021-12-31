@@ -4,6 +4,9 @@
 from src.MOEAs.Algorithm import Algorithm
 import numpy as np
 
+from src.Population import Population
+from src.Population import genPopulation
+
 # Classe do algoritmo NSGA-II
 
 
@@ -28,63 +31,79 @@ class MRGA(Algorithm):
         self.R = R
 
     def niching(self, population, archive):
-        for p in population:
-            selected_leader = None
-            best_dist = None
-            x = np.array(p.decisionVariables)
-            for q in archive:
-                x_archive = np.array(q.decisionVariables)
-                dist = np.linalg.norm(x - x_archive)
-                if best_dist == None or dist < best_dist:
-                    best_dist = dist
-                    selected_leader = q
-            p.cluster = selected_leader.cluster
+        X = population.decisionVariables
+        X_archive = archive.decisionVariables
+
+        selected_leader = []
+        for i in range(X.shape[0]):
+            selected_leader.append(np.argmin(np.sum(np.abs(X[i] - X_archive) ** 2, axis=-1) ** (1./2)))
+
+        P_cluster = []
+        P_clusters = []
+        for i in range(len(self.R)):
+            P_clusters.append([])
+        for i in range(X.shape[0]):
+            P_cluster.append(archive.cluster[selected_leader[i]])
+            P_clusters[P_cluster[i]].append(i)
+
+        population.cluster = P_cluster
+        return P_clusters
 
     def memo_survival_selection(self, population, archive):
-        self.niching(population, archive)
+        self.problem.evaluate(population)
+        P_clusters = self.niching(population, archive)
 
-        P_clusters = []
+        #print(P_clusters)
 
+        P_clusters_sorted = []
         for i in range(len(self.R)):
-            P_cluster = []
-            for individual in population:
-                if individual.cluster == i:
-                    P_cluster.append(individual)
-            P_clusters.append(sorted(P_cluster, key=lambda x: x.objectives[0]))
+            if len(P_clusters[i]) == 0:
+                P_clusters_sorted.append(np.array([]))
+                continue
+
+            kktpm_cluster_inds = np.argsort(np.squeeze(population.objectives[P_clusters[i]]))
+            P_clusters_sorted.append(np.array(P_clusters[i])[kktpm_cluster_inds])
+            '''print("check clusters sorted:")
+            print(kktpm_cluster_inds)
+            print(len(P_clusters_sorted[i]), len(P_clusters[i]))'''
+            assert(len(P_clusters_sorted[i]) == len(P_clusters[i]))
 
         selected_P = []
         ptr_cluster = [0] * len(self.R)
         k = 1
-        while k <= self.populationSize:
+
+        pop_size = population.decisionVariables.shape[0]
+
+        while k <= pop_size:
             for i in range(len(self.R)):
                 if ptr_cluster[i] >= len(P_clusters[i]):
                     continue
-                selected_P.append(P_clusters[i][ptr_cluster[i]])
+                selected_P.append(P_clusters_sorted[i][ptr_cluster[i]])
                 ptr_cluster[i] += 1
                 k += 1
 
-        return selected_P
+        survivors = Population(population.numberOfObjectives, population.numberOfDecisionVariables)
+        survivors.decisionVariables = population.decisionVariables[selected_P]
+        survivors.objectives = population.objectives[selected_P]
+        return survivors
 
     def memo_tournament_selection(self, population, archive):
-        self.niching(population, archive)
-
-        P_clusters = []
-        for i in range(len(self.R)):
-            P_cluster = []
-            for individual in population:
-                if individual.cluster == i:
-                    P_cluster.append(individual)
-            P_clusters.append(P_cluster)
+        P_clusters = self.niching(population, archive)
+        self.problem.evaluate(population)
 
         l = 1
         selected_pop = []
 
+        assert(len(P_clusters) == len(self.R))
         available_clusters = []
         for i in range(len(P_clusters)):
             if len(P_clusters[i]) > 0:
                 available_clusters.append(i)
+        assert(len(available_clusters) > 0)
 
-        while l <= self.populationSize:
+        pop_size = population.decisionVariables.shape[0] / 2
+
+        while l <= pop_size:
             for I in range(len(available_clusters)):
                 i = available_clusters[I]
                 j = np.random.randint(0, len(P_clusters[i]))
@@ -94,7 +113,7 @@ class MRGA(Algorithm):
                     k = np.random.randint(0, len(P_clusters[i]))
                     while k == j:
                         k = np.random.randint(0, len(P_clusters[i]))
-                    if P_clusters[i][j].objectives[0] <= P_clusters[i][k].objectives[0]:
+                    if np.sum(population.objectives[j]) <= np.sum(population.objectives[k]):
                         selected_pop.append(P_clusters[i][j])
                     else:
                         selected_pop.append(P_clusters[i][k])
@@ -114,42 +133,45 @@ class MRGA(Algorithm):
                     k = np.random.randint(0, len(P_clusters[i2]))
                     while k == j:
                         k = np.random.randint(0, len(P_clusters[i2]))
-                    if P_clusters[i2][j].objectives[0] <= P_clusters[i2][k].objectives[0]:
+                    if np.sum(population.objectives[j]) <= np.sum(population.objectives[k]):
                         selected_pop.append(P_clusters[i2][j])
                     else:
                         selected_pop.append(P_clusters[i2][k])
 
                 l += 2
-                if l > self.populationSize:
+                if l > pop_size:
                     break
 
-        return selected_pop
+        selected = Population(self.problem.numberOfObjectives, self.problem.numberOfDecisionVariables)
+        selected.decisionVariables = self.population.decisionVariables[selected_pop]
+
+        return selected
 
     def evolute(self, archive):
-        parents = self.memo_tournament_selection(self.population, archive)
-        parents1 = []
-        parents2 = []
-        for i in range(int(self.populationSize / 2)):
-            parents1.append(parents[i])
-            parents2.append(parents[i + int(self.populationSize / 2)])
-    
-        lower = self.problem.decisionVariablesLimit[0]
-        upper = self.problem.decisionVariablesLimit[1]
-    
-        for i in range(int(self.populationSize / 2)):
-            children = self.crossover.crossover([parents1[i], parents2[i]],lower,upper)
-    
-            children[0] = self.mutation.mutate(children[0],lower,upper)
-            children[1] = self.mutation.mutate(children[1],lower,upper)
+        parents1 = self.memo_tournament_selection(self.population, archive)
+        parents2 = self.memo_tournament_selection(self.population, archive)
 
-            for child in children:
-                self.problem.evaluate(child)
-                self.offspring.add(child)
-                self.evaluations += 1
+        lower = np.array(self.problem.decisionVariablesLimit[0])
+        upper = np.array(self.problem.decisionVariablesLimit[1])
+        
+        children1, children2 = self.crossover.crossover(parents1, parents2, lower, upper)
+        children = children1
+        children.join(children2)
+
+        self.mutation.mutate(children, lower, upper)
+        
+        self.offspring.join(children)
+
+        self.problem.evaluate(self.offspring)
+
+        self.evaluations += parents1.decisionVariables.shape[0] + parents2.decisionVariables.shape[0]
 
     def createOffspring(self, archive):
-        self.offspring.clear()
-        self.evolute(archive)
+        self.offspring = Population(self.problem.numberOfObjectives, self.problem.numberOfDecisionVariables)
+        self.offspring.decisionVariables = np.zeros((0, self.problem.numberOfDecisionVariables))
+        while self.offspring.decisionVariables.shape[0] < self.offSpringPopulationSize:
+            self.evolute(archive)
+        self.problem.evaluate(self.offspring)
 
     def execute(self, archive):
         self.initializePopulation()
@@ -160,37 +182,26 @@ class MRGA(Algorithm):
                 print("Evaluations: " + str(self.evaluations) +
                       " de " + str(self.maxEvaluations) + "...")
 
-            mixedPopulation = self.population.union(self.offspring)
-            self.population.clear()
-            self.offspring.clear()
-
-            for p in mixedPopulation:
-                self.problem.evaluate(p)
-
-            selectedPopulation = self.memo_survival_selection(mixedPopulation, archive)
-            for p in selectedPopulation:
-                self.population.add(p)
+            self.population.join(self.offspring)
+            survivors = self.memo_survival_selection(self.population, archive)
+            self.population.join(survivors)
 
             self.evolute(archive)
 
-        self.niching(self.population, archive)
-        P_clusters = []
-        for i in range(len(self.R)):
-            P_cluster = []
-            for p in self.population:
-                if p.cluster == i:
-                    P_cluster.append(p)
-            P_clusters.append(sorted(P_cluster, key=lambda x: x.objectives[0]))
+        self.problem.evaluate(self.population)
+        P_clusters = self.niching(self.population, archive)
 
-        selected = []
+        winners = []
         for i in range(len(P_clusters)):
             if len(P_clusters[i]) == 0:
                 continue
 
             winner = P_clusters[i][0]
             for j in range(1, len(P_clusters[i])):
-                if P_clusters[i][j].objectives[0] < winner.objectives[0]:
+                if self.population.objectives[P_clusters[i][j]] < self.population.objectives[winner]:
                     winner = P_clusters[i][j]
-            selected.append(winner)
+            winners.append(winner)
 
-        self.population = set(selected)
+        self.population.decisionVariables = self.population.decisionVariables[winners]
+        self.population.objectives = self.population.objectives[winners]
+

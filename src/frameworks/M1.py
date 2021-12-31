@@ -8,6 +8,8 @@ from src.problems.Problem import Problem
 from src.Solution import Solution
 from src.ParetoFront import ParetoFront
 
+from src.Population import Population, genPopulation
+
 # manage Kriging input/output
 class SM_QF_layer(Problem):
     def __init__(self, SMs, numberOfObjectives, numberOfDecisionVariables, decisionVariablesLimit=None):
@@ -20,6 +22,15 @@ class SM_QF_layer(Problem):
             objectives.append(self.SMs[i].predict_values(np.array([solution.decisionVariables]))[0][0])
         solution.objectives = objectives
         return solution
+    
+    def evaluate(self, population):
+        x = population.decisionVariables
+
+        obj_solutions = self.SMs[0].predict_values(x)
+        for i in range(1, len(self.SMs)):
+            obj_solutions = np.hstack((obj_solutions, self.SMs[i].predict_values(x)))
+
+        population.objectives = obj_solutions
 
 def lhs_to_solution(A, limits, numberOfObjectives, numberOfDecisionVariables):
     for i in range(numberOfDecisionVariables):
@@ -60,34 +71,29 @@ class M1():
     def run(self):
         t = 0
         k = (t % self.tau)
-        Pt = []
-        Pk = lhs_to_solution(lhs(self.problem.numberOfDecisionVariables, samples=self.sample_size), self.problem.decisionVariablesLimit, self.problem.numberOfObjectives, self.problem.numberOfDecisionVariables)  # Initialize surrogate model's training set
+        Pt = Population(self.problem.numberOfObjectives, self.problem.numberOfDecisionVariables)
+        Pk = genPopulation(self.problem, samples=self.sample_size)
         paretoFront = ParetoFront()
 
         eval = 0
         while (eval < self.SEmax):
             if t % self.tau == 0:
-                Pk = list(set(Pk + Pt))
-                check_limits(Pk, self.problem.decisionVariablesLimit)
+                Pk.join(Pt)
+                #check_limits(Pk, self.problem.decisionVariablesLimit)
                 # High-fidelity evaluations (functions)
-                for p in Pk:
-                    self.problem.evaluate(p)
-                Fkm = []
-                for i in range(self.problem.numberOfObjectives):
-                    Fkm.append([])
-                    for p in Pk:
-                        Fkm[i].append(p.objectives[i])
-                X = []
-                for p in Pk:
-                    X.append(p.decisionVariables)
+                self.problem.evaluate(Pk)
+                Fkm = np.transpose(Pk.objectives)
 
-                eval = len(Pk)
+                if t == 0:
+                    eval = self.sample_size
+                else:
+                    eval += self.EMO.populationSize
 
                 # Surrogate independently each objective function
                 SMs = []  # Surrogate models
                 for i in range(self.problem.numberOfObjectives):
                     SM = KRG(print_training=False, print_prediction=False)
-                    SM.set_training_values(np.array(X), np.array(Fkm[i]))
+                    SM.set_training_values(Pk.decisionVariables, Fkm[i])
                     SM.train()
                     SMs.append(SM)
                 # Update EMO to use the created surrogates as objective function
@@ -96,31 +102,26 @@ class M1():
 
                 if k == 0:
                     # Initialize EMO’s population
-                    Pt = lhs_to_solution(lhs(self.problem.numberOfDecisionVariables, samples=self.EMO.populationSize), self.problem.decisionVariablesLimit, self.problem.numberOfObjectives, self.problem.numberOfDecisionVariables)
+                    Pt = genPopulation(self.problem, samples=self.EMO.populationSize)
                 else:
-                    paretoFront.fastNonDominatedSort(Pk)
-                    Pt = []
-                    i = j = 0
-                    while len(Pt) < self.EMO.populationSize and j < len(paretoFront.getInstance().front):
-                        Pt.append(paretoFront.getInstance().front[j][i])
-                        i += 1
-                        if i == len(paretoFront.getInstance().front[j]):
-                            i = 0
-                            j += 1
+                    fronts = paretoFront.fastNonDominatedSort(Pk)
+                    fronts_order = np.argsort(fronts)
+                    X = np.copy(Pk.decisionVariables)
+                    X = X[fronts_order][:self.EMO.populationSize]
+                    Pt.decisionVariables = X
                 k += 1
 
             # Optimize surrogate model
             self.EMO.evaluations = 0
-            self.EMO.execute(set(Pt))
-            Pt = list(self.EMO.population)
+            self.EMO.execute(Pt)
+            Pt = self.EMO.population
             print(t + 1)
             t += 1
 
-        Pfinal = list(set(Pk + Pt))
+        Pk.join(Pt)
+        self.problem.evaluate(Pk)
 
-        # Evaluate Pfinal using objective function
-        for p in Pfinal:
-            self.problem.evaluate(p)
-
-        paretoFront.fastNonDominatedSort(Pfinal)
-        return paretoFront.getInstance().front[0]
+        fronts = paretoFront.fastNonDominatedSort(Pk)
+        Pk.decisionVariables = Pk.decisionVariables[fronts == 0]
+        Pk.objectives = Pk.objectives[fronts == 0]
+        return Pk

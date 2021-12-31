@@ -8,16 +8,14 @@ from src.problems.Problem import Problem
 from src.Solution import Solution
 from src.ParetoFront import ParetoFront
 
+from src.Population import Population
+from src.Population import genPopulation
+
 # manage Kriging input/output
 class SM_QF_layer(Problem):
     def __init__(self, SMs, numberOfObjectives, numberOfDecisionVariables, decisionVariablesLimit=None):
-        super(SM_QF_layer, self).__init__(numberOfObjectives, numberOfDecisionVariables, decisionVariablesLimit=None)
+        super(SM_QF_layer, self).__init__(numberOfObjectives, numberOfDecisionVariables, decisionVariablesLimit)
         self.SMs = SMs
-
-        lowerBounds = [0.0 for _ in range(numberOfDecisionVariables)]
-        upperBounds = [1.0 for _ in range(numberOfDecisionVariables)]
-    
-        self.decisionVariablesLimit = (lowerBounds, upperBounds)
 
     def evaluate(self, solution):
         objectives = []
@@ -25,17 +23,15 @@ class SM_QF_layer(Problem):
             objectives.append(self.SMs[i].predict_values(np.array([solution.decisionVariables]))[0][0])
         solution.objectives = objectives
         return solution
+    
+    def evaluate(self, population):
+        x = population.decisionVariables
 
-def lhs_to_solution(A, numberOfObjectives, numberOfDecisionVariables):
-    B = list()
-    for a in A:
-        b = Solution(numberOfObjectives, numberOfDecisionVariables)
-        decisionVariables = []
-        for x in a:
-            decisionVariables.append(x)
-        b.decisionVariables = decisionVariables
-        B.append(b)
-    return B
+        obj_solutions = self.SMs[0].predict_values(x)
+        for i in range(1, len(self.SMs)):
+            obj_solutions = np.hstack((obj_solutions, self.SMs[i].predict_values(x)))
+
+        population.objectives = obj_solutions
 
 class M3():
     def __init__(self, problem, EMO, sample_size, SEmax, k, alfa, R):
@@ -49,75 +45,68 @@ class M3():
 
     def dist_func(self, P, r):
         dists = []
-        for p in P:
-            f = np.array(p.objectives)
+        for i in range(P.objectives.shape[0]):
+            f = P.objectives[i]
             f_norm = f / np.linalg.norm(f)
             dist = np.linalg.norm(np.cross(np.array(r), -f_norm)) / np.linalg.norm(np.array(r))
             dists.append(dist)
         return dists
 
     def ASF(self, P, dir_index):
-        F = []
-        for p in P:
-            F.append(p.objectives)
-        F = np.array(F)
-
-        return np.max(F - self.R[dir_index], axis=1)
+        return np.max(P.objectives - self.R[dir_index], axis=1)
 
     def run(self):
-        P = lhs_to_solution(lhs(self.problem.numberOfDecisionVariables, samples=self.sample_size), self.problem.numberOfObjectives, self.problem.numberOfDecisionVariables)
+        P = genPopulation(self.problem, self.sample_size)
         paretoFront = ParetoFront()
 
         eval = self.sample_size
         while eval < self.SEmax:
             for dir_index in range(len(self.R)):
-                for p in P:
-                    self.problem.evaluate(p)
+                self.problem.evaluate(P)
 
                 # sort P according to distance from r and select nearest solutions
                 dists = self.dist_func(P, np.array(self.R[dir_index]))
                 dists_order = np.argsort(dists)
-                Pr = [P[i] for i in dists_order][:max(1, int(self.alfa * len(P)))]
+
+                Pr = Population(self.problem.numberOfObjectives, self.problem.numberOfDecisionVariables)
+                Pr.decisionVariables = P.decisionVariables[dists_order]
+                Pr.objectives = P.objectives[dists_order]
+                Pr.decisionVariables = Pr.decisionVariables[:max(1, int(self.alfa * P.decisionVariables.shape[0]))]
+                Pr.objectives = Pr.objectives[:max(1, int(self.alfa * P.decisionVariables.shape[0]))]
 
                 ASFs = self.ASF(Pr, dir_index)
 
-                # Pr with ASF as objective
-                for i in range(len(Pr)):
-                    pr = Solution(1, self.problem.numberOfDecisionVariables)
-                    pr.decisionVariables = Pr[i].decisionVariables
-                    Pr[i] = pr
-
-                Xr = []
-                for pr in Pr:
-                    Xr.append(pr.decisionVariables)
-
                 SM = KRG(print_training=False, print_prediction=False)
-                SM.set_training_values(np.array(Xr), np.array(ASFs))
+                SM.set_training_values(Pr.decisionVariables, ASFs)
                 SM.train()
                 SMs = [SM]
                 # 1 objective
-                self.EMO.problem = SM_QF_layer(SMs, self.problem.numberOfObjectives, self.problem.numberOfDecisionVariables, self.problem.decisionVariablesLimit)
+                self.EMO.problem = SM_QF_layer(SMs, 1, self.problem.numberOfDecisionVariables, self.problem.decisionVariablesLimit)
 
-                for i in range(0, self.k):
+                Pr.numberOfObjectives = 1
+                Pr.objectives = np.full((Pr.decisionVariables.shape[0], 1), np.array([0]))
+
+                for _ in range(0, self.k):
                     self.EMO.evaluations = 0
-                    self.EMO.execute(set(Pr)) # best found solution
-                    for sol in list(self.EMO.population):
-                        if sol not in P:
-                            non_ASF_sol = Solution(self.problem.numberOfObjectives, self.problem.numberOfDecisionVariables)
-                            non_ASF_sol.decisionVariables = sol.decisionVariables
-                            P.append(non_ASF_sol)
+                    self.EMO.execute(Pr)
+                    for x in self.EMO.population.decisionVariables:
+                        is_in = np.any(np.all(x == P.decisionVariables, axis=1))
+                        if not is_in:
+                            P.decisionVariables = np.append(P.decisionVariables, np.array([x]), axis=0)
                             break
 
                     eval += 1
-                    print(len(P))
+                    print(P.decisionVariables.shape[0])
                     if eval >= self.SEmax:
-                        for p in P:
-                            self.problem.evaluate(p)
-                        paretoFront.fastNonDominatedSort(P)
-                        return paretoFront.getInstance().front[0]
+                        self.problem.evaluate(P)
+                        fronts = paretoFront.fastNonDominatedSort(P)
+                        P.decisionVariables = P.decisionVariables[fronts == 0]
+                        P.objectives = P.objectives[fronts == 0]
+                        return P
 
-        #evaluate Pfinal using objective function
-        for p in P:
-            self.problem.evaluate(p)
-        paretoFront.fastNonDominatedSort(P)
-        return paretoFront.getInstance().front[0]
+        P.numberOfObjectives = self.problem.numberOfObjectives
+        self.problem.evaluate(P)
+        fronts = paretoFront.fastNonDominatedSort(P)
+        P.decisionVariables = P.decisionVariables[fronts == 0]
+        P.objectives = P.objectives[fronts == 0]
+        return P

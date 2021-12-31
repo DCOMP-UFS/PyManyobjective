@@ -7,6 +7,7 @@ Created on Thu May 13 15:57:13 2021
 """
 
 from src.MOEAs.sparsities.Sparsity import Sparsity
+import numpy as np
 
 # Classe de crowding distance
 class CrowdingDistance(Sparsity):
@@ -16,37 +17,24 @@ class CrowdingDistance(Sparsity):
   #  Computa as distancias de cada solução das fronteiras e salva no atributo
   # sparsity
   def compute(self, population):
-    populationSize = len(population)
-    
-    if populationSize == 0:
-      return None
-    elif populationSize == 1:
-      population[0].sparsity = 1e10
-      return population
-    elif populationSize == 2:
-      population[0].sparsity = 1e10
-      population[1].sparsity = 1e10
-      return population
-    
-    front = list()
-    for solution in population:
-      solution.sparsity = 0.0
-      front.append(solution)
-    
-    numberOfObjectives = population[0].numberOfObjectives
-    
-    for i in range(numberOfObjectives):
-      front.sort(key=lambda x: x.objectives[i])
-      objectiveMin = front[0].objectives[i]
-      objectiveMax = front[populationSize-1].objectives[i]
-      
-      front[0].sparsity                = 1e10
-      front[populationSize-1].sparsity = 1e10
-      
-      for j in range(1, populationSize-1):
-        distance = front[j+1].objectives[i] - front[j-1].objectives[i]
-        distance = distance / (objectiveMax - objectiveMin)
-        distance += front[j].sparsity
-        front[j].sparsity = distance
-        
-    return front
+    f = population.objectives
+
+    crowding_matrix = np.zeros(f.shape)
+    f_mag = np.sqrt(np.einsum('...i,...i', f, f))
+    normed_f = f / f_mag[..., np.newaxis]
+
+    for i in range(population.numberOfObjectives):
+        crowding = np.zeros(f.shape[0])
+        crowding[0] = 1
+        crowding[f.shape[0] - 1] = 1
+
+        sorted_f = np.sort(normed_f[:, i])
+        sorted_f_idx = np.argsort(normed_f[:, i])
+        crowding[1:f.shape[0] - 1] = sorted_f[2:f.shape[0]] - sorted_f[0:f.shape[0] - 2]
+
+        re_sort_order = np.argsort(sorted_f_idx)
+        sorted_crowding = crowding[re_sort_order]
+        crowding_matrix[:, i] = sorted_crowding
+
+    crowding_distances = np.sum(crowding_matrix, axis=1)
+    return crowding_distances
