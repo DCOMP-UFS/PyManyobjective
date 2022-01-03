@@ -32,7 +32,7 @@ from pymoo.problems.many.dtlz import DTLZ6 as DTLZ6_pymoo
 from pymoo.problems.many.dtlz import DTLZ7 as DTLZ7_pymoo
 
 from pymoo.factory import get_performance_indicator
-from pymoo.indicators.kktpm import KKTPM
+from pymoo.performance_indicator.kktpm import KKTPM
 
 from pathlib import Path
 

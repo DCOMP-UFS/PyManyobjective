@@ -40,7 +40,7 @@ from sklearn import datasets
 from sklearn.model_selection import train_test_split
 
 from pymoo.factory import get_performance_indicator
-from pymoo.indicators.kktpm import KKTPM
+from pymoo.performance_indicator.kktpm import KKTPM
 
 from pathlib import Path
 
