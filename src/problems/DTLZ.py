@@ -89,7 +89,7 @@ class DTLZ3(DTLZ1):
         X_, X_M = x[:, :self.n_objs - 1], x[:, self.n_objs - 1:]
         g = self.g1(X_M)
 
-        population.objectives self.obj_func(X_, g, alpha=1)
+        population.objectives = self.obj_func(X_, g, alpha=1)
 
 class DTLZ4(DTLZ1):
     def __init__(self, numberOfObjectives=3, k=5):
