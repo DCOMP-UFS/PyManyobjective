@@ -2,7 +2,7 @@ import math
 import random
 import numpy as np
 import scipy
-from pyDOE import lhs
+from pyDOE2 import lhs
 from pyearth import Earth
 
 from src.problems.Problem import Problem
