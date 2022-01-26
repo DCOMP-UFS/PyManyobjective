@@ -25,7 +25,7 @@ class SVM_hyperparameters(Problem):
                                 (lowerBounds, upperBounds))
         self.problem = "SVM_hyperparameters"
 
-        self.kernels = ['linear','poly','rbf','sigmoid']
+        self.kernels = ['linear', 'poly', 'rbf', 'sigmoid']
 
         self.X_train = X_train
         self.y_train = y_train
@@ -35,17 +35,28 @@ class SVM_hyperparameters(Problem):
     def get_model(self):
         return SVC(kernel='rbf')
 
-    def evaluate(self, solution):
-        params = solution.decisionVariables
+    def evaluate(self, population):
+        fake_params = population.decisionVariables
+        print(fake_params)
 
-        C = params[0] * 50
-        kernel = self.kernels[int(round(params[1] * 10))]
+        resize_consts = np.array([50, 10])
 
-        model = SVC(C=C, kernel=kernel)
-        model.fit(self.X_train, self.y_train)
+        params = fake_params * resize_consts
+        # round second param
+        params[:,1] = np.round(params[:,1])
 
-        scores = cross_val_score(model, self.X_test, self.y_test, cv=3, scoring='accuracy')
+        print(params)
 
-        solution.objectives[0] = 1.0 - scores.mean()
-        return solution
+        all_means = np.zeros((params.shape[0], 1))
+        for i in range(params.shape[0]):
+            C = params[i][0]
+            kernel = self.kernels[int(params[i][1])]
+            print("C:", C, "kernel: ", kernel)
+            model = SVC(C=C, kernel=kernel)
+            model.fit(self.X_train, self.y_train)
+            scores = cross_val_score(model, self.X_test, self.y_test, cv=3, scoring='accuracy')
+            # minimization
+            all_means[i][0] = 1.0 - scores.mean()
+
+        population.objectives = all_means
 
