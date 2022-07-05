@@ -4,7 +4,6 @@ import time
 from src.MOEAs.GA import *
 from src.MOEAs.NSGAII import *
 from src.MOEAs.MRGA import *
-from src.MOEAs.GridSearch import *
 
 from src.MOEAs.mutations.PolynomialMutation import PolynomialMutation
 
@@ -14,7 +13,8 @@ from src.MOEAs.sparsities.CrowdingDistance import CrowdingDistance
 
 from src.BinaryTournament import BinaryTournament
 
-from src.frameworks.M1_linear import M1
+from src.frameworks.M1 import M1
+from src.frameworks.M1_linear import M1 as M1_linear
 from src.frameworks.M3 import M3
 from src.frameworks.M6 import M6
 from src.frameworks.SMO import SMO
@@ -32,7 +32,7 @@ from sklearn import datasets
 from sklearn.model_selection import train_test_split
 
 from pymoo.factory import get_performance_indicator
-from pymoo.indicators.kktpm import KKTPM
+from pymoo.performance_indicator.kktpm import KKTPM
 
 from pathlib import Path
 
@@ -143,6 +143,12 @@ def get_problem(problem, args_file):
         X_train, X_test, y_train, y_test = train_test_split(
             data, digits.target, test_size=0.45, shuffle=False)
         return SVM_hyperparameters(X_train, y_train, X_test, y_test)
+    
+    if problem == "SVM_hyperparameters_boston":
+        boston = datasets.load_boston()
+        X_train, X_test, y_train, y_test = train_test_split(
+            boston.data, boston.target, test_size=0.45, shuffle=False)
+        return SVM_hyperparameters(X_train, y_train, X_test, y_test, classification=False)
 
     print("unknown problem")
     return None
@@ -176,20 +182,14 @@ def run(framework, problem, moea, crossover, mutation, selection, sparsity, n, f
         t1 = time.process_time()
         P = Framework.run()
         t2 = time.process_time()
-        t = t2 - t1
+        T = t2 - t1
 
-        X = []
-        F = []
-        T = []
-        bestPrecision = 0
-        for p in P:
-            X.append(p.decisionVariables)
-            f = []
-            for objective in p.objectives:
-                f.append(1.0 - objective)
-            F.append(f)
-            T.append(t)
+        X = P.decisionVariables.tolist()
+        F = P.objectives.tolist()
 
-            bestPrecision = max(bestPrecision, 1.0 - p.objectives[0])
-    
+        if problem == "SVM_hyperparameters_boston":
+            bestPrecision = np.min(P.objectives, axis=0)[0]
+        else:
+            bestPrecision = 1.0 - np.min(P.objectives, axis=0)[0]
+
         save(framework + "_" + problem + "_" + moea, str(i), X, F, T, bestPrecision)

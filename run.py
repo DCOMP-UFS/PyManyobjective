@@ -1,4 +1,5 @@
 import json
+import time
 
 from src.MOEAs.NSGAII import *
 from src.MOEAs.MRGA import *
@@ -13,6 +14,7 @@ from src.MOEAs.sparsities.CrowdingDistance import CrowdingDistance
 from src.BinaryTournament import BinaryTournament
 
 from src.frameworks.M1 import M1
+from src.frameworks.M1_linear import M1 as M1_linear
 from src.frameworks.M3 import M3
 from src.frameworks.M6 import M6
 from src.frameworks.SMO import SMO
@@ -116,6 +118,8 @@ def get_framework(framework, args_file):
 
     if framework == "M1": 
         return M1(None, None, args["sample_size"], args["tau"], args["SEmax"])
+    if framework == "M1_linear": 
+        return M1_linear(None, None, args["sample_size"], args["tau"], args["SEmax"])
     if framework == "M3":
         return M3(None, None, args["sample_size"], args["SEmax"], args["k"], args["alfa"], args["R"])
     if framework == "M6":
@@ -209,7 +213,11 @@ def run(framework, problem, moea, crossover, mutation, selection, sparsity, n, f
             pareto_front.append(coords)
 
     for i in range(n):
+        t1 = time.process_time()
         P = Framework.run()
+        t2 = time.process_time()
+        T = t2 - t1
+        print("Tempo:", T)
         X = P.decisionVariables.tolist()
         F = P.objectives.tolist()
 
