@@ -32,13 +32,13 @@ class Scikit_layer(Problem):
         self.SMs = SMs
 
     def evaluate(self, population):
-        x = population.decisionVariables
+        x = population.getNotEvaluatedVars()
 
-        obj_solutions = self.SMs[0].predict(x)
+        obj_solutions = np.transpose([self.SMs[0].predict(x)])
         for i in range(1, len(self.SMs)):
-            obj_solutions = np.column_stack((obj_solutions, self.SMs[i].predict(x)))
+            obj_solutions = np.hstack((obj_solutions, np.transpose(self.SMs[i].predict(x))))
 
-        population.objectives = obj_solutions
+        population.setNotEvaluatedObjectives(obj_solutions)
 
 def lhs_to_solution(A, limits, numberOfObjectives, numberOfDecisionVariables):
     for i in range(numberOfDecisionVariables):
@@ -100,7 +100,7 @@ class M1():
                 # Surrogate independently each objective function
                 SMs = []  # Surrogate models
                 for i in range(self.problem.numberOfObjectives):
-                    SM = LinearRegression()
+                    SM = LinearRegression(n_jobs=-1)
                     SM.fit(Pk.decisionVariables, Fkm[i])
                     SMs.append(SM)
                 # Update EMO to use the created surrogates as objective function
@@ -120,15 +120,16 @@ class M1():
 
             # Optimize surrogate model
             self.EMO.evaluations = 0
+            Pt.clearObjectives()
             self.EMO.execute(Pt)
             Pt = self.EMO.population
-            print(t + 1)
+            Pt.clearObjectives()
+            print("t:", t + 1)
             t += 1
 
         Pk.join(Pt)
         self.problem.evaluate(Pk)
 
         fronts = paretoFront.fastNonDominatedSort(Pk)
-        Pk.decisionVariables = Pk.decisionVariables[fronts == 0]
-        Pk.objectives = Pk.objectives[fronts == 0]
+        Pk.filter(fronts == 0)
         return Pk

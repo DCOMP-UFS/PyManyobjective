@@ -35,24 +35,19 @@ class GA(Algorithm):
       self.initializePopulation()
     else:
       self.population = initialPopulation
-      
+
     self.problem.evaluate(self.population)
-    self.createOffspring()
 
     while self.evaluations < self.maxEvaluations:
       if (self.evaluations % 1000) == 0:
         print("Evaluations: " + str(self.evaluations) + " de " + str(self.maxEvaluations) + "...")
 
+      self.createOffspring()
+
       self.population.join(self.offspring)
 
       fronts = self.paretoFront.fastNonDominatedSort(self.population)
       fronts_order = np.argsort(fronts)
-
-      self.population.decisionVariables = self.population.decisionVariables[fronts_order]
-      self.population.objectives = self.population.objectives[fronts_order]
       
-      self.population.decisionVariables = self.population.decisionVariables[:self.populationSize]
-      self.population.objectives = self.population.objectives[:self.populationSize]
-      
-      self.offspring = Population(self.problem.numberOfObjectives, self.problem.numberOfDecisionVariables)
-      self.evolute()
+      self.population.filter(fronts_order)
+      self.population.shrink(self.populationSize)

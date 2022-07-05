@@ -108,7 +108,7 @@ class MARSAOP():
 
     def run(self):
         self.d = self.problem.numberOfDecisionVariables
-        self.m = 100 * self.d
+        self.m = 3
         self.n = 2 * self.d + 1
         self.prob = min(20 / self.d, 1)
         assert(self.problem.numberOfObjectives == 1)
@@ -118,9 +118,10 @@ class MARSAOP():
         paretoFront = ParetoFront()
 
         self.problem.evaluate(Pk)
-        print("scores:", Pk.objectives)
 
         for iterator in range(self.Gmax):
+            print(iterator)
+
             Fkm = np.transpose(Pk.objectives)
 
             X = Pk.decisionVariables
@@ -137,7 +138,7 @@ class MARSAOP():
 
             candidate_points = self.generate_candidate_points(cur_prob, bestVariables)
             promising_point = self.select_evaluation_point(candidate_points, SMs[0], Pk)
-            Pk.decisionVariables = np.concatenate((Pk.decisionVariables, np.array([promising_point])))
+            Pk.add(promising_point)
             self.problem.evaluate(Pk)
 
             if bestPrecision == None or Pk.objectives[-1][0] < bestPrecision:
@@ -154,6 +155,5 @@ class MARSAOP():
             #print(iterator)
 
         fronts = paretoFront.fastNonDominatedSort(Pk)
-        Pk.decisionVariables = Pk.decisionVariables[fronts == 0]
-        Pk.objectives = Pk.objectives[fronts == 0]
+        Pk.filter(fronts == 0)
         return Pk
