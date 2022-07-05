@@ -8,26 +8,16 @@ Created on Fri Nov 20 00:32:09 2020
 import numpy as np
 
 class ParetoFront:
-  W = 1
-  L = -1
-  D = 0
+  def dominance(self, p1_obj, p2_obj):
+    best_objectives = np.minimum(p1_obj, p2_obj)
+    p1_optimal = np.all(p1_obj == best_objectives)
+    p2_optimal = np.all(p2_obj == best_objectives)
 
-  def dominance(self, s1, s2):
-    count1 = 0
-    count2 = 0
-    
-    for i in range(s1.numberOfObjectives):
-      if s1.objectives[i] < s2.objectives[i]:
-        count1 += 1
-      elif s2.objectives[i] < s1.objectives[i]:
-        count2 += 1
-        break
-          
-    if count1 > 0 and count2 == 0:
-      return self.W
-    elif count1 == 0 and count2 > 0:
-      return self.L
-    return self.D
+    if p1_optimal and ~p2_optimal:
+      return 1
+    elif ~p1_optimal and p2_optimal:
+      return -1
+    return 0
     
   def fastNonDominatedSort(self, population):
     X = population.decisionVariables
