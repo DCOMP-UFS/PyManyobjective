@@ -24,6 +24,7 @@ from src.frameworks.MARSAOP import MARSAOP
 from tensorflow.keras.datasets import mnist
 
 from src.problems.keras_nn import Keras_NN
+from src.problems.keras_cnn import Keras_CNN
 from src.problems.SVM_hyperparameters import SVM_hyperparameters
 
 from tensorflow.keras import utils
@@ -135,6 +136,17 @@ def get_problem(problem, args_file):
         y_train = utils.to_categorical(y_train, nb_classes)
         y_test = utils.to_categorical(y_test, nb_classes)
         return Keras_NN(X_train, y_train, X_test, y_test, 64, 10)
+
+    if problem == "CNN_MNIST":
+        (X_train, y_train), (X_test, y_test) = mnist.load_data()
+
+        X_train = X_train.reshape(60000, 28, 28, 1)
+        X_test = X_test.reshape(10000, 28, 28, 1)
+
+        y_train = utils.to_categorical(y_train)
+        y_test = utils.to_categorical(y_test)
+
+        return Keras_CNN(X_train, y_train, X_test, y_test, (28, 28, 1), 10)
 
     if problem == "SVM_hyperparameters":
         digits = datasets.load_digits()
