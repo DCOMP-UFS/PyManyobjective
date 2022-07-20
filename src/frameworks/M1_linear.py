@@ -109,7 +109,7 @@ class M1():
 
                 if k == 0:
                     # Initialize EMO’s population
-                    Pt = genPopulation(self.problem, samples=self.EMO.populationSize)
+                    Pt = genPopulation(self.problem, samples=self.EMO.populationSize, evaluate=False)
                 else:
                     fronts = paretoFront.fastNonDominatedSort(Pk)
                     fronts_order = np.argsort(fronts)
