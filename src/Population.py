@@ -87,7 +87,7 @@ class Population:
         p.objectives = self.objectives
         return p
 
-def genPopulation(problem, samples):
+def genPopulation(problem, samples, evaluate=True):
     decisionVariables = lhs(problem.numberOfDecisionVariables, samples=samples)
     decisionVariables *= (np.array(problem.decisionVariablesLimit[1]) - np.array(problem.decisionVariablesLimit[0]))
     decisionVariables += np.array(problem.decisionVariablesLimit[0])
@@ -95,6 +95,7 @@ def genPopulation(problem, samples):
     population = Population(problem.numberOfObjectives, problem.numberOfDecisionVariables)
     population.decisionVariables = decisionVariables
 
-    problem.evaluate(population)
+    if evaluate:
+        problem.evaluate(population)
 
     return population
