@@ -153,18 +153,17 @@ def get_problem(problem, args_file):
         return Keras_CNN(X_train, y_train, X_test, y_test, (28, 28, 1), 10)
 
     if problem == "SVM_hyperparameters":
-        digits = datasets.load_digits()
-        n_samples = len(digits.images)
-        data = digits.images.reshape((n_samples, -1))
-        X_train, X_test, y_train, y_test = train_test_split(
-            data, digits.target, test_size=0.45, shuffle=False)
-        return SVM_hyperparameters(X_train, y_train, X_test, y_test)
+        d = datasets.load_digits()
+        X = d.data
+        y = d.target
+        n_samples = len(X)
+        return SVM_hyperparameters(X, y)
     
     if problem == "SVM_hyperparameters_boston":
-        boston = datasets.load_boston()
-        X_train, X_test, y_train, y_test = train_test_split(
-            boston.data, boston.target, test_size=0.45, shuffle=False)
-        return SVM_hyperparameters(X_train, y_train, X_test, y_test, classification=False)
+        d = datasets.load_boston()
+        X = d.data
+        y = data.target
+        return SVM_hyperparameters(X, y)
 
     print("unknown problem")
     return None
@@ -195,6 +194,8 @@ def run(framework, problem, moea, crossover, mutation, selection, sparsity, n, f
     Framework.EMO = MOEA
 
     for i in range(n):
+        print("At {}-th run".format(i + 1))
+
         t1 = time.process_time()
         P = Framework.run()
         t2 = time.process_time()

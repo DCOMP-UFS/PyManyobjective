@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split,cross_val_score
 import numpy as np
 
 class SVM_hyperparameters(Problem):
-    def __init__(self, X_train, y_train, X_test, y_test, classification=True):
+    def __init__(self, X_train, y_train, X_test=None, y_test=None, classification=True):
         lowerBounds = [0.0 for _ in range(3)]
         upperBounds = [1.0 for _ in range(3)]
 
@@ -66,15 +66,15 @@ class SVM_hyperparameters(Problem):
             kernel = self.kernels[int(params[i][1])]
             if self.classification:
                 model = SVC(C=C, kernel=kernel)
-                model.fit(self.X_train, self.y_train)
-                scores = cross_val_score(model, self.X_test, self.y_test, cv=3, scoring='accuracy')
+                #model.fit(self.X_train, self.y_train)
+                scores = cross_val_score(model, self.X_train, self.y_train, cv=3, scoring='accuracy')
                 all_means[i][0] = 1.0 - scores.mean()
             else:
                 epsilon = params[i][2]
 
                 model = SVR(C=C, kernel=kernel, epsilon=epsilon)
-                model.fit(self.X_train, self.y_train)
-                scores = cross_val_score(model, self.X_test, self.y_test, cv=3, scoring='neg_mean_squared_error')
+                #model.fit(self.X_train, self.y_train)
+                scores = cross_val_score(model, self.X_train, self.y_train, cv=3, scoring='neg_mean_squared_error')
                 all_means[i][0] = -scores.mean()
         population.setNotEvaluatedObjectives(all_means)
 
