@@ -44,9 +44,13 @@ def get_sparsity(sparsity):
     print("unknown crowding")
     return None
 
-def get_selection(selection):
+def get_selection(selection, args_samples):
+    args = None
+    with open(args_file) as fargs:
+        args = json.load(fargs)
+
     if selection == "Binary":
-        return BinaryTournament()
+        return BinaryTournament(args["tournament_size"])
 
     print("unknown selection")
     return None
@@ -92,9 +96,9 @@ def get_framework(framework, args_file):
 
     if framework == "M1_linear": 
         return M1_linear(None, None, args["sample_size"], args["tau"], args["SEmax"])
-    
+
     if framework == "MARSAOP":
-        return MARSAOP(None, args["Gmax"], args["prob"], args["variance"], args["wv"], args["thr1"], args["thr2"])
+        return MARSAOP(None, args["Gmax"], args["prob"], args["variance"], args["wv"], args["thr1"], args["thr2"], args["batch_size"])
 
     print("unknown framework")
 
@@ -179,14 +183,14 @@ def save(name, i, P, F, T, bestPrecision):
     with open("results/" + name + "/bestPrecision" + i, 'w+') as precision_file:
         precision_file.write(json.dumps(bestPrecision))
 
-def run(framework, problem, moea, crossover, mutation, selection, sparsity, n, framework_args_file, problem_args_file, moea_args_file, pareto_front_file, mutation_args_file, crossover_args_file):
+def run(framework, problem, moea, crossover, mutation, selection, sparsity, n, framework_args_file, problem_args_file, moea_args_file, pareto_front_file, mutation_args_file, crossover_args_file, selection_args_file):
     Problem = get_problem(problem, problem_args_file)
 
     MOEA = get_MOEA(moea, moea_args_file)
     MOEA.problem = Problem
     MOEA.mutation = get_mutation(mutation, mutation_args_file)
     MOEA.crossover = get_crossover(crossover, crossover_args_file)
-    MOEA.selection = get_selection(selection)
+    MOEA.selection = get_selection(selection, selection_args_file)
     MOEA.sparsity = get_sparsity(sparsity)
 
     Framework = get_framework(framework, framework_args_file)
