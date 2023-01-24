@@ -24,8 +24,8 @@ def check_limits(solutions, limits):
                 raise Exception
         j += 1
 
-class MARSAOP():
-    def __init__(self, problem, Gmax, prob, variance, wv, thr1, thr2):
+class new_MARSAOP():
+    def __init__(self, problem, Gmax, prob, variance, wv, thr1, thr2, batch_size):
         self.problem = problem # Objective function
         self.Gmax = Gmax
         #self.prob = prob
@@ -38,6 +38,8 @@ class MARSAOP():
 
         self.wv = wv
         self.ww = 1 - wv
+
+        self.batch_size = batch_size
 
         self.paretoFront = ParetoFront()
 
@@ -70,7 +72,7 @@ class MARSAOP():
 
         return candidate_points
 
-    def select_evaluation_point(self, candidates, SM, D):
+    def select_evaluation_points(self, candidates, SM, D):
         Rn_min = None
         Rn_max = None
 
@@ -95,7 +97,7 @@ class MARSAOP():
         W[can_div] = (-dis[can_div] + dis_max) / (dis_max - dis_min)
 
         S = self.wv * V + self.ww * W
-        return X[np.argmin(S)]
+        return X[np.argsort(S)][:self.batch_size,]
 
     def update_variance(self):
         if self.T1 > self.thr1:
@@ -119,8 +121,8 @@ class MARSAOP():
 
         self.problem.evaluate(Pk)
 
-        for iterator in range(self.Gmax):
-            print(iterator)
+        for iterator in range(self.Gmax // self.batch_size):
+            print(iterator * self.batch_size)
 
             Fkm = np.transpose(Pk.objectives)
 
@@ -137,19 +139,26 @@ class MARSAOP():
             cur_prob = self.prob * (1 - math.log(iterator + 1) / math.log(self.Gmax))
 
             candidate_points = self.generate_candidate_points(cur_prob, bestVariables)
-            promising_point = self.select_evaluation_point(candidate_points, SMs[0], Pk)
-            Pk.add(promising_point)
-            self.problem.evaluate(Pk)
+            promising_points = self.select_evaluation_points(candidate_points, SMs[0], Pk)
+            promising_P = Population(self.problem.numberOfObjectives, self.problem.numberOfDecisionVariables)
+            promising_P.decisionVariables = promising_points
+            self.problem.evaluate(promising_P)
 
-            if bestPrecision == None or Pk.objectives[-1][0] < bestPrecision:
-                bestPrecision = Pk.objectives[-1][0]
-                self.T1 += 1
+            Pk.join(promising_P)
+
+            if bestPrecision == None or (promising_P.objectives[:,0] < bestPrecision).sum() > 0:
+                self.T1 += len(promising_points)
                 self.T2 = 0
+            elif (promising_P.objectives[:,0] < bestPrecision).sum() > 0:
+                self.T1 += (promising_P.objectives[:,0] < bestPrecision).sum()
+                self.T2 = 0
+
+                bestPrecision = promising_P.objectives[0][0]
             else:
-                self.T2 += 1
+                self.T2 += len(promising_points)
                 self.T1 = 0
 
-            self.n += 1
+            self.n += self.batch_size
             self.update_variance()
 
             #print(iterator)
