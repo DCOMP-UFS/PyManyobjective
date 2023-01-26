@@ -21,6 +21,8 @@ class SM_QF_layer(Problem):
         x = population.decisionVariables
 
         obj_solutions = self.SMs[0].predict_values(x)
+        print(obj_solutions)
+        print(self.SMs[1].predict_values(x))
         for i in range(1, len(self.SMs)):
             obj_solutions = np.hstack((obj_solutions, self.SMs[i].predict_values(x)))
 
@@ -36,7 +38,8 @@ class Scikit_layer(Problem):
 
         obj_solutions = np.transpose([self.SMs[0].predict(x)])
         for i in range(1, len(self.SMs)):
-            obj_solutions = np.hstack((obj_solutions, np.transpose(self.SMs[i].predict(x))))
+            print(self.SMs[i].predict(x))
+            obj_solutions = np.c_[obj_solutions, self.SMs[i].predict(x)]
 
         population.setNotEvaluatedObjectives(obj_solutions)
 
@@ -91,6 +94,7 @@ class M1():
                 # High-fidelity evaluations (functions)
                 self.problem.evaluate(Pk)
                 Fkm = np.transpose(Pk.objectives)
+                print(Fkm)
 
                 if t == 0:
                     eval = self.sample_size
