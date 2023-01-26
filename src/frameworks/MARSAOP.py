@@ -24,7 +24,7 @@ def check_limits(solutions, limits):
                 raise Exception
         j += 1
 
-class new_MARSAOP():
+class MARSAOP():
     def __init__(self, problem, Gmax, prob, variance, wv, thr1, thr2, batch_size):
         self.problem = problem # Objective function
         self.Gmax = Gmax
