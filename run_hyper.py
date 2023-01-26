@@ -44,7 +44,7 @@ def get_sparsity(sparsity):
     print("unknown crowding")
     return None
 
-def get_selection(selection, args_samples):
+def get_selection(selection, args_file):
     args = None
     with open(args_file) as fargs:
         args = json.load(fargs)
