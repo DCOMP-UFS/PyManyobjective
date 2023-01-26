@@ -26,6 +26,7 @@ from tensorflow.keras.datasets import mnist
 from src.problems.keras_nn import Keras_NN
 from src.problems.keras_cnn import Keras_CNN
 from src.problems.SVM_hyperparameters import SVM_hyperparameters
+from src.problems.SVM_hyperparameters_sen_spe import SVM_hyperparameters_sen_spe
 
 from tensorflow.keras import utils
 
@@ -168,6 +169,20 @@ def get_problem(problem, args_file):
         X = d.data
         y = data.target
         return SVM_hyperparameters(X, y)
+
+    if problem == "SVM_hyperparameters_statlog":
+        X_ls = []
+        y_ls = []
+        with open("datasets/heart.dat", "r") as statlog_dat_file:
+            lines = statlog_dat_file.readlines()
+            for line in lines:
+                row_data = [float(x) for x in line.split()]
+                X_ls.append(row_data[:-1])
+                y_ls.append(row_data[-1])
+        X = np.array(X_ls)
+        y = np.array(y_ls)
+        return SVM_hyperparameters_sen_spe(X, y)
+
 
     print("unknown problem")
     return None
