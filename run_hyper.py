@@ -180,6 +180,7 @@ def get_problem(problem, args_file):
                 X_ls.append(row_data[:-1])
                 y_ls.append(row_data[-1])
         X = np.array(X_ls)
+        X /= np.max(X)
         y = np.array(y_ls)
         return SVM_hyperparameters_sen_spe(X, y)
 
