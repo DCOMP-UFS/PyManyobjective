@@ -226,7 +226,13 @@ def run(framework, problem, moea, crossover, mutation, selection, sparsity, n, f
 
         if problem == "SVM_hyperparameters_boston":
             bestPrecision = np.min(P.objectives, axis=0)[0]
-        else:
+        elif problem == "SVM_hyperparameters":
             bestPrecision = 1.0 - np.min(P.objectives, axis=0)[0]
+        elif problem == "SVM_hyperparameters_statlog":
+            bestPrecision = 0
+            for decisionVariable in P.decisionVariables.tolist():
+                bestPrecision = max(bestPrecision, Problem.get_config_accuracy(decisionVariable))
+        else:
+            sys.exit()
 
         save(framework + "_" + problem + "_" + moea, str(i), X, F, T, bestPrecision)

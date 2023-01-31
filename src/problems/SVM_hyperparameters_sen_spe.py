@@ -52,4 +52,13 @@ class SVM_hyperparameters_sen_spe(Problem):
             all_means[i][1] = 1.0 - specificity_scores.mean()
         population.setNotEvaluatedObjectives(all_means)
 
+    def get_config_accuracy(self, config):
+        resize_consts = np.array([50, 10])
+        params = config * resize_consts
+        C = params[0]
+        kernel = self.kernels[int(params[1])]
+        model = SVC(C=C, kernel=kernel)
+        accuracy = cross_val_score(model, self.X_train, self.y_train, cv=3, scoring="accuracy")
+        return accuracy.mean()
+
 
