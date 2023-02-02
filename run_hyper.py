@@ -199,7 +199,11 @@ def save(name, i, P, F, T, bestPrecision):
     with open("results/" + name + "/bestPrecision" + i, 'w+') as precision_file:
         precision_file.write(json.dumps(bestPrecision))
 
-def run(framework, problem, moea, crossover, mutation, selection, sparsity, n, framework_args_file, problem_args_file, moea_args_file, pareto_front_file, mutation_args_file, crossover_args_file, selection_args_file):
+def run(framework, problem, moea, crossover, mutation, selection, sparsity, n, framework_args_file, problem_args_file, moea_args_file, pareto_front_file, mutation_args_file, crossover_args_file, selection_args_file, save_dir=None):
+    if save_dir == None:
+        save_dir = framework + "_" + problem + "_" + moea
+        print("Save directory not provided, saving to:", save_dir)
+
     Problem = get_problem(problem, problem_args_file)
 
     MOEA = get_MOEA(moea, moea_args_file)
@@ -235,4 +239,4 @@ def run(framework, problem, moea, crossover, mutation, selection, sparsity, n, f
         else:
             sys.exit()
 
-        save(framework + "_" + problem + "_" + moea, str(i), X, F, T, bestPrecision)
+        save(save_dir, str(i), X, F, T, bestPrecision)
