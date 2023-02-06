@@ -20,6 +20,7 @@ from src.frameworks.M6 import M6
 from src.frameworks.SMO import SMO
 from src.frameworks.SMB import SMB
 from src.frameworks.MARSAOP import MARSAOP
+from src.frameworks.Dummy import Dummy
 
 from tensorflow.keras.datasets import mnist
 
@@ -100,6 +101,9 @@ def get_framework(framework, args_file):
 
     if framework == "MARSAOP":
         return MARSAOP(None, args["Gmax"], args["prob"], args["variance"], args["wv"], args["thr1"], args["thr2"], args["batch_size"])
+
+    if framework == "Dummy":
+        return Dummy(None, None)
 
     print("unknown framework")
 
