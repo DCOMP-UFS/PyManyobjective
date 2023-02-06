@@ -36,32 +36,27 @@ class NSGAII(Algorithm):
       self.population = initialPopulation
       
     self.problem.evaluate(self.population)
-    self.createOffspring()
 
     while self.evaluations < self.maxEvaluations:
       if (self.evaluations % 1000) == 0:
         print("Evaluations: " + str(self.evaluations) + " de " + str(self.maxEvaluations) + "...")
       
+      self.createOffspring()
+
       self.population.join(self.offspring)
 
       fronts = self.paretoFront.fastNonDominatedSort(self.population)
       fronts_order = np.argsort(fronts)
 
-      self.population.decisionVariables = self.population.decisionVariables[fronts_order]
-      self.population.objectives = self.population.objectives[fronts_order]
+      self.population.filter(fronts_order)
 
       last = fronts == fronts[fronts_order][:self.populationSize][-1]
-      last_population = Population(self.problem.numberOfObjectives, self.problem.numberOfDecisionVariables)
-      last_population.decisionVariables = self.population.decisionVariables[last]
-      last_population.objectives = self.population.objectives[last]
+      last_population = self.population.clone()
+      last_population.filter(last)
 
       crowding_distance = self.sparsity.compute(last_population) * -1
       last_order = np.argsort(crowding_distance)
       self.population.decisionVariables[last] = self.population.decisionVariables[last][last_order]
       self.population.objectives[last] = self.population.objectives[last][last_order]
 
-      self.population.decisionVariables = self.population.decisionVariables[:self.populationSize]
-      self.population.objectives = self.population.objectives[:self.populationSize]
-      
-      self.offspring = Population(self.problem.numberOfObjectives, self.problem.numberOfDecisionVariables)
-      self.evolute()
+      self.population.shrink(self.populationSize)
