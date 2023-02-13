@@ -122,6 +122,10 @@ def get_MOEA(MOEA, args_file):
     print("unknown problem")
     return None
 
+def interval_string_to_average_int(s):
+    interval = [float(x) for x in s.split('-')]
+    return (interval[0] + interval[1]) / 2.0
+
 def get_problem(problem, args_file):
     args = None
     with open(args_file) as fargs:
@@ -188,6 +192,68 @@ def get_problem(problem, args_file):
         y = np.array(y_ls)
         return SVM_hyperparameters_sen_spe(X, y)
 
+    if problem == "SVM_hyperparameters_breast":
+        X_ls = []
+        y_ls = []
+        with open("datasets/breast-cancer.dat", "r") as breast_dat_file:
+            for line in breast_dat_file.readlines():
+                row_data = [x for x in line.split(',')]
+                print(row_data)
+                # 1. Class: no-recurrence-events, recurrence-events
+                x = []
+                if row_data[0] == "no-recurrence-events":
+                    x.append(0)
+                else:
+                    x.append(1)
+                # 2. age: 10-19, 20-29, 30-39, 40-49, 50-59, 60-69, 70-79, 80-89, 90-99.
+                x.append(interval_string_to_average_int(row_data[1]))
+                # 3. menopause: lt40, ge40, premeno.
+                if row_data[2] == "lt40":
+                    x.append(0)
+                elif row_data[2] == "ge40":
+                    x.append(1)
+                else:
+                    x.append(2)
+                # 4. tumor-size: 0-4, 5-9, 10-14, 15-19, 20-24, 25-29, 30-34, 35-39, 40-44, 45-49, 50-54, 55-59.
+                x.append(interval_string_to_average_int(row_data[3]))
+                # 5. inv-nodes: 0-2, 3-5, 6-8, 9-11, 12-14, 15-17, 18-20, 21-23, 24-26, 27-29, 30-32, 33-35, 36-39.
+                x.append(interval_string_to_average_int(row_data[4]))
+                # 6. node-caps: yes, no.
+                if row_data[5] == "no":
+                    x.append(0)
+                else:
+                    x.append(1)
+                # 7. deg-malig: 1, 2, 3.
+                x.append(float(row_data[6]))
+                # 8. breast: left, right.
+                if row_data[7] == "left":
+                    x.append(0)
+                else:
+                    x.append(1)
+                # 9. breast-quad: left-up, left-low, right-up, right-low, central.
+                if row_data[8] == "left-up":
+                    x.append(0)
+                elif row_data[8] == "left-low":
+                    x.append(1)
+                elif row_data[8] == "right-up":
+                    x.append(2)
+                elif row_data[8] == "right-low":
+                    x.append(3)
+                else:
+                    x.append(4)
+                # 10. irradiat: yes, no.
+                if row_data[9][0] == 'n':
+                    y_ls.append(0)
+                else:
+                    y_ls.append(1)
+                X_ls.append(x)
+            X = np.array(X_ls)
+            X /= np.max(X)
+            print(X.shape)
+            sys.exit()
+            y = np.array(y_ls)
+            return SVM_hyperparameters_sen_spe(X, y)
+
     print("unknown problem")
     return None
 
@@ -240,7 +306,7 @@ def run(framework, problem, moea, crossover, mutation, selection, sparsity, n, f
             bestPrecision = np.min(P.objectives, axis=0)[0]
         elif problem == "SVM_hyperparameters":
             bestPrecision = 1.0 - np.min(P.objectives, axis=0)[0]
-        elif problem == "SVM_hyperparameters_statlog":
+        elif problem == "SVM_hyperparameters_statlog" or problem == "SVM_hyperparameters_breast":
             bestPrecision = 0
             bestDecisionVariable = None
             for decisionVariable in P.decisionVariables.tolist():
