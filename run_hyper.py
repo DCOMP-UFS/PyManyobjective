@@ -249,10 +249,21 @@ def get_problem(problem, args_file):
                 X_ls.append(x)
             X = np.array(X_ls)
             X /= np.max(X)
-            print(X.shape)
-            sys.exit()
             y = np.array(y_ls)
             return SVM_hyperparameters_sen_spe(X, y)
+
+    if problem == "SVM_hyperparameters_diabetes":
+        X_ls = []
+        y_ls = []
+        with open("datasets/diabetes.dat", "r") as diabetes_dat_file:
+            for line in diabetes_dat_file.readlines():
+                row_data = [float(x) for x in line.split(',')]
+                X_ls.append(row_data[:-1])
+                y_ls.append(row_data[-1])
+        X = np.array(X_ls)
+        X /= np.max(X)
+        y = np.array(y_ls)
+        return SVM_hyperparameters_sen_spe(X, y)
 
     print("unknown problem")
     return None
@@ -306,7 +317,7 @@ def run(framework, problem, moea, crossover, mutation, selection, sparsity, n, f
             bestPrecision = np.min(P.objectives, axis=0)[0]
         elif problem == "SVM_hyperparameters":
             bestPrecision = 1.0 - np.min(P.objectives, axis=0)[0]
-        elif problem == "SVM_hyperparameters_statlog" or problem == "SVM_hyperparameters_breast":
+        elif problem == "SVM_hyperparameters_statlog" or problem == "SVM_hyperparameters_breast" or problem == "SVM_hyperparameters_diabetes":
             bestPrecision = 0
             bestDecisionVariable = None
             for decisionVariable in P.decisionVariables.tolist():
