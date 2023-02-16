@@ -33,6 +33,7 @@ from tensorflow.keras import utils
 
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
 
 from pymoo.factory import get_performance_indicator
 from pymoo.performance_indicator.kktpm import KKTPM
@@ -188,7 +189,9 @@ def get_problem(problem, args_file):
                 X_ls.append(row_data[:-1])
                 y_ls.append(row_data[-1])
         X = np.array(X_ls)
-        X /= np.max(X)
+        transformer = MinMaxScaler()
+        transformer.fit(X)
+        X = transformer.transform(X)
         y = np.array(y_ls)
         return SVM_hyperparameters_sen_spe(X, y)
 
@@ -231,16 +234,20 @@ def get_problem(problem, args_file):
                 else:
                     x.append(1)
                 # 9. breast-quad: left-up, left-low, right-up, right-low, central.
-                if row_data[8] == "left-up":
+                if row_data[8] == "left_up":
                     x.append(0)
-                elif row_data[8] == "left-low":
+                elif row_data[8] == "left_low":
                     x.append(1)
-                elif row_data[8] == "right-up":
+                elif row_data[8] == "right_up":
                     x.append(2)
-                elif row_data[8] == "right-low":
+                elif row_data[8] == "right_low":
                     x.append(3)
                 else:
                     x.append(4)
+                print("")
+                print(row_data[8])
+                print(x[-1])
+                print("")
                 # 10. irradiat: yes, no.
                 if row_data[9][0] == 'n':
                     y_ls.append(0)
@@ -248,7 +255,9 @@ def get_problem(problem, args_file):
                     y_ls.append(1)
                 X_ls.append(x)
             X = np.array(X_ls)
-            X /= np.max(X)
+            transformer = MinMaxScaler()
+            transformer.fit(X)
+            X = transformer.transform(X)
             y = np.array(y_ls)
             return SVM_hyperparameters_sen_spe(X, y)
 
@@ -261,8 +270,29 @@ def get_problem(problem, args_file):
                 X_ls.append(row_data[:-1])
                 y_ls.append(row_data[-1])
         X = np.array(X_ls)
-        X /= np.max(X)
+        transformer = MinMaxScaler()
+        transformer.fit(X)
+        X = transformer.transform(X)
         y = np.array(y_ls)
+        return SVM_hyperparameters_sen_spe(X, y)
+
+    if problem == "SVM_hyperparameters_haberman":
+        X_ls = []
+        y_ls = []
+        with open("datasets/haberman.dat", "r") as iris_dat_file:
+            for line in iris_dat_file.readlines():
+                row_data = [x for x in line.split(',')]
+                X_ls.append([float(x) for x in row_data[:-1]])
+                if row_data[-1] == "1\n":
+                    y_ls.append(0)
+                else:
+                    y_ls.append(1)
+        X = np.array(X_ls)
+        transformer = MinMaxScaler()
+        transformer.fit(X)
+        X = transformer.transform(X)
+        y = np.array(y_ls)
+
         return SVM_hyperparameters_sen_spe(X, y)
 
     print("unknown problem")
@@ -317,7 +347,7 @@ def run(framework, problem, moea, crossover, mutation, selection, sparsity, n, f
             bestPrecision = np.min(P.objectives, axis=0)[0]
         elif problem == "SVM_hyperparameters":
             bestPrecision = 1.0 - np.min(P.objectives, axis=0)[0]
-        elif problem == "SVM_hyperparameters_statlog" or problem == "SVM_hyperparameters_breast" or problem == "SVM_hyperparameters_diabetes":
+        elif problem == "SVM_hyperparameters_statlog" or problem == "SVM_hyperparameters_breast" or problem == "SVM_hyperparameters_diabetes" or problem == "SVM_hyperparameters_haberman":
             bestPrecision = 0
             bestDecisionVariable = None
             for decisionVariable in P.decisionVariables.tolist():
