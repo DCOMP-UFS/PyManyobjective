@@ -28,6 +28,7 @@ from src.problems.keras_nn import Keras_NN
 from src.problems.keras_cnn import Keras_CNN
 from src.problems.SVM_hyperparameters import SVM_hyperparameters
 from src.problems.SVM_hyperparameters_sen_spe import SVM_hyperparameters_sen_spe
+from src.problems.SVM_hyperparameters_sen_spe_2 import SVM_hyperparameters_sen_spe_2
 
 from tensorflow.keras import utils
 
