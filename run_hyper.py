@@ -50,7 +50,7 @@ def get_sparsity(sparsity):
 def get_selection(selection, args_file):
     args = None
     with open(args_file) as fargs:
-        args = json.load(fargs)
+        args = json.load(fargs)["Selection"]
 
     if selection == "Binary":
         return BinaryTournament(args["tournament_size"])
@@ -61,7 +61,7 @@ def get_selection(selection, args_file):
 def get_mutation(mutation, args_file):
     args = None
     with open(args_file) as fargs:
-        args = json.load(fargs)
+        args = json.load(fargs)["Mutation"]
 
     if mutation == "Polynomial":
         return PolynomialMutation(mutationProbability=args["probability"], distributionIndex=args["distribution"])
@@ -72,7 +72,7 @@ def get_mutation(mutation, args_file):
 def get_crossover(crossover, args_file):
     args = None
     with open(args_file) as fargs:
-        args = json.load(fargs)
+        args = json.load(fargs)["Crossover"]
 
     if crossover == "SBX":
         return SBXCrossover(distributionIndex=args["distribution"], crossoverProbability=args["probability"])
@@ -83,7 +83,7 @@ def get_crossover(crossover, args_file):
 def get_framework(framework, args_file):
     args = None
     with open(args_file) as fargs:
-        args = json.load(fargs)
+        args = json.load(fargs)["Framework"]
 
     if framework == "M1": 
         return M1(None, None, args["sample_size"], args["tau"], args["SEmax"])
@@ -111,7 +111,7 @@ def get_framework(framework, args_file):
 def get_MOEA(MOEA, args_file):
     args = None
     with open(args_file) as fargs:
-        args = json.load(fargs)
+        args = json.load(fargs)["MEMO"]
 
     if MOEA == "GA":
         return GA(None, args["maxEvaluations"], args["populationSize"], args["offspringSize"], None, None, None, None)
@@ -130,7 +130,7 @@ def interval_string_to_average_int(s):
 def get_problem(problem, args_file):
     args = None
     with open(args_file) as fargs:
-        args = json.load(fargs)
+        args = json.load(fargs)["Problem"]
 
     if problem == "NN_MNIST":
         digits = datasets.load_digits()
@@ -312,21 +312,21 @@ def save(name, i, P, F, T, bestPrecision, bestDecisionVariable=None):
         with open("results/" + name + "/bestDecisionVariable" + i, 'w+') as decisionVariable_file:
             decisionVariable_file.write(json.dumps(bestDecisionVariable))
 
-def run(framework, problem, moea, crossover, mutation, selection, sparsity, n, framework_args_file, problem_args_file, moea_args_file, pareto_front_file, mutation_args_file, crossover_args_file, selection_args_file, save_dir=None):
+def run(framework, problem, moea, crossover, mutation, selection, sparsity, n, args_file, save_dir=None):
     if save_dir == None:
         save_dir = framework + "_" + problem + "_" + moea
         print("Save directory not provided, saving to:", save_dir)
 
-    Problem = get_problem(problem, problem_args_file)
+    Problem = get_problem(problem, args_file)
 
-    MOEA = get_MOEA(moea, moea_args_file)
+    MOEA = get_MOEA(moea, args_file)
     MOEA.problem = Problem
-    MOEA.mutation = get_mutation(mutation, mutation_args_file)
-    MOEA.crossover = get_crossover(crossover, crossover_args_file)
-    MOEA.selection = get_selection(selection, selection_args_file)
+    MOEA.mutation = get_mutation(mutation, args_file)
+    MOEA.crossover = get_crossover(crossover, args_file)
+    MOEA.selection = get_selection(selection, args_file)
     MOEA.sparsity = get_sparsity(sparsity)
 
-    Framework = get_framework(framework, framework_args_file)
+    Framework = get_framework(framework, args_file)
     Framework.problem = Problem
     Framework.EMO = MOEA
 
