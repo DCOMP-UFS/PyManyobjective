@@ -1,5 +1,5 @@
 {
-    "sample_size": 300,
-    "tau": 50,
-    "SEmax": 500
+    "sample_size": 5,
+    "tau": 2,
+    "SEmax": 25
 }

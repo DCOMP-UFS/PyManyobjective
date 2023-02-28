@@ -1,0 +1,26 @@
+{
+	"Framework":
+	{
+
+	},
+	"MOEA":
+	{
+
+	},
+	"Crossover":
+	{
+
+	},
+	"Mutation":
+	{
+
+	},
+	"Selection":
+	{
+
+	},
+	"Problem":
+	{
+
+	}
+}
