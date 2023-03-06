@@ -299,7 +299,7 @@ def get_problem(problem, args_file):
     print("unknown problem")
     return None
 
-def save(name, i, P, F, T, bestPrecision, bestDecisionVariable=None):
+def save(name, i, P, F, T):
     Path("results/" + name).mkdir(parents=True, exist_ok=True)
     with open("results/" + name + "/P" + i, 'w+') as P_file:
         P_file.write(json.dumps(P))
@@ -307,11 +307,6 @@ def save(name, i, P, F, T, bestPrecision, bestDecisionVariable=None):
         F_file.write(json.dumps(F))
     with open("results/" + name + "/T" + i, 'w+') as T_file:
         T_file.write(json.dumps(T))
-    with open("results/" + name + "/bestPrecision" + i, 'w+') as precision_file:
-        precision_file.write(json.dumps(bestPrecision))
-    if bestDecisionVariable:
-        with open("results/" + name + "/bestDecisionVariable" + i, 'w+') as decisionVariable_file:
-            decisionVariable_file.write(json.dumps(bestDecisionVariable))
 
 def run(framework, problem, moea, crossover, mutation, selection, sparsity, n, args_file, save_dir=None):
     if save_dir == None:
@@ -342,21 +337,4 @@ def run(framework, problem, moea, crossover, mutation, selection, sparsity, n, a
         X = P.decisionVariables.tolist()
         F = P.objectives.tolist()
 
-        bestDecisionVariable = None
-
-        if problem == "SVM_hyperparameters_boston":
-            bestPrecision = np.min(P.objectives, axis=0)[0]
-        elif problem == "SVM_hyperparameters":
-            bestPrecision = 1.0 - np.min(P.objectives, axis=0)[0]
-        elif problem == "SVM_hyperparameters_statlog" or problem == "SVM_hyperparameters_breast" or problem == "SVM_hyperparameters_diabetes" or problem == "SVM_hyperparameters_haberman":
-            bestPrecision = 0
-            bestDecisionVariable = None
-            for decisionVariable in P.decisionVariables.tolist():
-                accuracy = Problem.get_config_accuracy(decisionVariable)
-                if accuracy > bestPrecision:
-                    bestPrecision = accuracy
-                    bestDecisionVariable = decisionVariable
-        else:
-            sys.exit()
-
-        save(save_dir, str(i), X, F, T, bestPrecision, bestDecisionVariable)
+        save(save_dir, str(i), X, F, T)
