@@ -152,16 +152,15 @@ def GRA(f):
     GRC = (1 / F.shape[0]) * np.sum((delta_min + delta_max) / (delta_I + delta_max), axis=1)
     return np.argmax(GRC)
 
-algos = ["M1_25_100_nsga2_heart_classic", "M1_50_100_nsga2_heart_classic", "M1_75_100_nsga2_heart_classic", "NSGAII_100_heart_classic",
-    "M1_25_1000_nsga2_heart_classic", "M1_50_1000_nsga2_heart_classic", "M1_75_1000_nsga2_heart_classic", "NSGAII_1000_heart_classic",
-    "M1_25_10000_nsga2_heart_classic", "M1_50_10000_nsga2_heart_classic", "M1_75_10000_nsga2_heart_classic", "NSGAII_10000_heart_classic"]
+algos = ["M1_25_100_nsga2_haberman_classic", "M1_50_100_nsga2_haberman_classic", "M1_75_100_nsga2_haberman_classic", "NSGAII_100_haberman_classic",
+    "M1_25_1000_nsga2_haberman_classic", "M1_50_1000_nsga2_haberman_classic", "M1_75_1000_nsga2_haberman_classic", "NSGAII_1000_haberman_classic",
+    "M1_25_10000_nsga2_haberman_classic", "M1_50_10000_nsga2_haberman_classic", "M1_75_10000_nsga2_haberman_classic"]
 
 t = 25
 
 data = {'': ["precisão média", "tempo médio", "hipervolume médio", "AUC média", "desvio padrão médio da precisão", "desvio padrão médio do tempo", "melhor precisão", "melhor hipervolume", "melhor AUC", "melhor precisão GRA", "melhor AUC GRA"]}
 
-problem = get_problem("SVM_hyperparameters_statlog", "resources/args_samples/M1_25_100.json")
-problem.y_train = problem.y_train - 1
+problem = get_problem("SVM_hyperparameters_haberman", "resources/args_samples/M1_25_100.json")
 
 for algo in algos:
     print("on algo:", algo)
@@ -271,7 +270,7 @@ for algo in algos:
     print("")
 
 df = pd.DataFrame(data)
-writer = pd.ExcelWriter("demo.xlsx", engine="xlsxwriter")
+writer = pd.ExcelWriter("haberman_new.xlsx", engine="xlsxwriter")
 df.to_excel(writer, sheet_name="Sheet1", index=False)
 
 insert_plot_images(writer)
