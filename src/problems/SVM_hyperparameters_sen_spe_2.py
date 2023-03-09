@@ -31,13 +31,14 @@ class SVM_hyperparameters_sen_spe_2(Problem):
         self.X_train = X_train
         self.y_train = y_train
 
+        self.lo_values = np.array([1e-5, 1e-10])
+        self.hi_values = np.array([1e2, 2*1e1])
+        self.resize_consts = self.hi_values - self.lo_values
+
     def evaluate(self, population):
         fake_params = population.getNotEvaluatedVars()
 
-        resize_consts = np.array([20, 14])
-        initial_values = np.array([0.001, 0])
-
-        params = fake_params * resize_consts + initial_values
+        params = fake_params * self.resize_consts + self.lo_values
 
         all_means = np.zeros((params.shape[0], 2))
         for i in range(params.shape[0]):
@@ -51,9 +52,7 @@ class SVM_hyperparameters_sen_spe_2(Problem):
         population.setNotEvaluatedObjectives(all_means)
 
     def get_config_accuracy(self, config):
-        resize_consts = np.array([20, 14])
-        initial_values = np.array([0.001, 0])
-        params = config * resize_consts + initial_values
+        params = config * self.resize_consts + self.lo_values
         C = params[0]
         gamma = params[1]
         model = SVC(C=C, gamma=gamma)
@@ -61,9 +60,7 @@ class SVM_hyperparameters_sen_spe_2(Problem):
         return accuracy.mean()
 
     def get_config_model(self, config):
-        resize_consts = np.array([20, 14])
-        initial_values = np.array([0.001, 0])
-        params = config * resize_consts + initial_values
+        params = config * self.resize_consts + self.lo_values
         C = params[0]
         gamma = params[1]
         model = SVC(C=C, gamma=gamma)
