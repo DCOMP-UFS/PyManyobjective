@@ -7,6 +7,7 @@ from deap.tools._hypervolume.pyhv import hypervolume
 from src.ParetoFront import ParetoFront
 from src.Population import Population
 from sklearn.metrics import roc_curve, auc
+from run_hyper import get_problem
 
 plt.tight_layout()
 plt.figure(figsize=[3.5, 3.0])
@@ -234,10 +235,16 @@ def fill_algos_data(algos, problem, t, data):
             p_dp += (precisions[i] - avg_precision) ** 2
         for i in range(t):
             t_dp += (times[i] - avg_time) ** 2
-        p_dp /= t
+        p_dp /= len(precisions)
         t_dp /= t
         p_dp = math.sqrt(p_dp)
         t_dp = math.sqrt(t_dp)
+
+        p_hv = 0
+        for i in range(len(hypervolumes)):
+            p_hv += (hypervolumes[i] - avg_hypervolume) ** 2
+        p_hv /= len(hypervolumes)
+        p_hv = math.sqrt(p_hv)
 
         bestPrecision, bestPrecision_i = get_best_value_and_index(precisions, maximize=True)
         bestHypervolume, _ = get_best_value_and_index(hypervolumes, maximize=True)
@@ -255,12 +262,12 @@ def fill_algos_data(algos, problem, t, data):
         plot_colored_all(np.copy(all_F), algo, bestPrecision_i, bestAUC_i)
         plot_colored_non_dominated(np.copy(all_F), algo, bestPrecision_i, bestAUC_i)
 
-        data[algo] = [avg_precision, avg_time, avg_hypervolume, avg_AUC, p_dp, t_dp, bestPrecision, bestHypervolume, bestAUC, bestMOPrecision, bestMOAUC]
+        data[algo] = [avg_precision, avg_time, avg_hypervolume, avg_AUC, p_dp, t_dp, p_hv, bestPrecision, bestHypervolume, bestAUC, bestMOPrecision, bestMOAUC]
 
         print("")
 
 def generate_sphreadsheet(file_name, algos, problem, t):
-    data = {'': ["precisão média", "tempo médio", "hipervolume médio", "AUC média", "desvio padrão médio da precisão", "desvio padrão médio do tempo", "melhor precisão", "melhor hipervolume", "melhor AUC", "melhor precisão GRA", "melhor AUC GRA"]}
+    data = {'': ["precisão média", "tempo médio", "hipervolume médio", "AUC média", "desvio padrão médio da precisão", "desvio padrão médio do tempo", "desvio padrão do hipervolume", "melhor precisão", "melhor hipervolume", "melhor AUC", "melhor precisão GRA", "melhor AUC GRA"]}
     fill_algos_data(algos, problem, t, data)
 
     df = pd.DataFrame(data)
