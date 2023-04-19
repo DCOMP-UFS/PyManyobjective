@@ -4,7 +4,7 @@ from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, make_scorer
 from sklearn.model_selection import cross_val_score
 
-from src.problems.scores import sensitivity_func, specificity_func
+from src.problems.scores import sensitivity_func, specificity_func, precision_func
 
 import numpy as np
 
@@ -65,5 +65,21 @@ class SVM_hyperparameters_sen_spe_2(Problem):
         gamma = params[1]
         model = SVC(C=C, gamma=gamma)
         return model
+
+    def get_config_f_measure(self, config):
+        params = config * self.resize_consts + self.lo_values
+        C = params[0]
+        gamma = params[1]
+        model = SVC(C=C, gamma=gamma)
+
+        precisions = cross_val_score(model, self.X_train, self.y_train, cv=3, scoring=make_scorer(precision_func))
+        sensitivities = cross_val_score(model, self.X_train, self.y_train, cv=3, scoring=make_scorer(sensitivity_func))
+        
+        precision = precisions.mean()
+        sensitivity = sensitivities.mean()
+        F_mean = 2 * precision * sensitivity / (precision + sensitivity)
+        return F_mean
+
+
 
 
