@@ -194,7 +194,7 @@ def get_problem(problem, args_file):
         transformer.fit(X)
         X = transformer.transform(X)
         y = np.array(y_ls)
-        return SVM_hyperparameters_sen_spe(X, y)
+        return SVM_hyperparameters_sen_spe_2(X, y)
 
     if problem == "SVM_hyperparameters_breast":
         X_ls = []
@@ -260,22 +260,7 @@ def get_problem(problem, args_file):
             transformer.fit(X)
             X = transformer.transform(X)
             y = np.array(y_ls)
-            return SVM_hyperparameters_sen_spe(X, y)
-
-    if problem == "SVM_hyperparameters_diabetes":
-        X_ls = []
-        y_ls = []
-        with open("datasets/diabetes.dat", "r") as diabetes_dat_file:
-            for line in diabetes_dat_file.readlines():
-                row_data = [float(x) for x in line.split(',')]
-                X_ls.append(row_data[:-1])
-                y_ls.append(row_data[-1])
-        X = np.array(X_ls)
-        transformer = MinMaxScaler()
-        transformer.fit(X)
-        X = transformer.transform(X)
-        y = np.array(y_ls)
-        return SVM_hyperparameters_sen_spe(X, y)
+            return SVM_hyperparameters_sen_spe_2(X, y)
 
     if problem == "SVM_hyperparameters_haberman":
         X_ls = []
@@ -294,7 +279,7 @@ def get_problem(problem, args_file):
         X = transformer.transform(X)
         y = np.array(y_ls)
 
-        return SVM_hyperparameters_sen_spe(X, y)
+        return SVM_hyperparameters_sen_spe_2(X, y)
 
     print("unknown problem")
     return None
