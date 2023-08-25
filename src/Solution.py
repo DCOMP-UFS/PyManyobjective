@@ -11,14 +11,22 @@ from numpy import random
 
 class Solution:
   # Construtor
-  def __init__(self, numberOfObjectives, numberOfDecisionVariables):
+  def __init__(self, 
+            numberOfObjectives, 
+            numberOfDecisionVariables,
+            decisionVariables=None
+    ):
     self.numberOfDecisionVariables = numberOfDecisionVariables
     self.numberOfObjectives        = numberOfObjectives
     self.decisionVariables         = list()
     self.objectives                = list()
     
     while len(self.decisionVariables) < numberOfDecisionVariables:
-      self.decisionVariables.append(0.0)
+      if decisionVariables is None:
+        self.decisionVariables.append(0.0)
+      else:
+        self.decisionVariables = list(decisionVariables)
+        break
     
     while len(self.objectives) < numberOfObjectives:
       self.objectives.append(0.0)

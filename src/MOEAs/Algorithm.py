@@ -60,15 +60,24 @@ class Algorithm:
       self.evaluations += 1
       
       
-  def initializePopulation(self):
+  def initializePopulation(self,population=None):
     self.population.clear()
     solutionList = set()
     
-    while len(solutionList) < self.populationSize:
-      newSolution = self.problem.generateSolution()
-      newSolution = self.problem.evaluate(newSolution) 
-      solutionList.add(newSolution)
-      self.evaluations += 1
+    if population is not None:
+        i = 0
+        while len(solutionList) < self.populationSize:
+            newSolution = self.problem.generateSolution(decision_vars=population[i])
+            newSolution = self.problem.evaluate(newSolution) 
+            solutionList.add(newSolution)
+            i += 1
+            self.evaluations += 1
+    else: 
+        while len(solutionList) < self.populationSize:
+            newSolution = self.problem.generateSolution()
+            newSolution = self.problem.evaluate(newSolution) 
+            solutionList.add(newSolution)
+            self.evaluations += 1
       
     self.paretoFront.fastNonDominatedSort(list(solutionList))
     for f in self.paretoFront.getInstance().front:

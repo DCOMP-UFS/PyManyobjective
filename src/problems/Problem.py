@@ -49,10 +49,15 @@ class Problem(object):
     
     return True
   
-  def generateSolution(self):
-    solution = Solution(numberOfObjectives=self.numberOfObjectives,
-                        numberOfDecisionVariables=self.numberOfDecisionVariables)
-    
+  def generateSolution(self,decision_vars=None):
+    if decision_vars is None:
+        solution = Solution(numberOfObjectives=self.numberOfObjectives,
+                            numberOfDecisionVariables=self.numberOfDecisionVariables)
+    else:
+        solution = Solution(numberOfObjectives=self.numberOfObjectives,
+                            numberOfDecisionVariables=self.numberOfDecisionVariables,
+                            decisionVariables=decision_vars)
+
     for i in range(self.numberOfDecisionVariables):
       lower = self.decisionVariablesLimit[0][i]
       upper = self.decisionVariablesLimit[1][i]
