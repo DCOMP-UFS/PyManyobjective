@@ -1,7 +1,7 @@
 from src.problems.DTLZ import DTLZ2
 from src.dvl.DLV import DVLFramework
 from src.MOEAs.NSGAIII import NSGAIII
-from src.dvl.models.Linear import Linear as LR
+from src.dvl.models.Linear import LinearModel as LR
 
 from scipy.stats.qmc import LatinHypercube, QMCEngine
 
