@@ -23,9 +23,9 @@ def lhs_to_solution(A, numberOfObjectives, numberOfDecisionVariables):
     return B
 
 def run(dummy, pop_size):
-    n_vars = 7
-    dtlz = DTLZ7()
-    dtlz_pymoo = DTLZ7_pymoo(7, 3)
+    n_vars = 12
+    dtlz = DTLZ2()
+    dtlz_pymoo = DTLZ2_pymoo(12, 3)
 
     npP = lhs(n_vars, pop_size)
     npF = dtlz_pymoo.evaluate(npP)

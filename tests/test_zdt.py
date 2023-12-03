@@ -1,4 +1,4 @@
-from src.ZDT import ZDT1, ZDT3, ZDT6
+from src.problems.ZDT import ZDT1, ZDT3, ZDT6
 
 from pymoo.problems.multi.zdt import ZDT1 as ZDT1_pymoo
 from pymoo.problems.multi.zdt import ZDT2 as ZDT2_pymoo
