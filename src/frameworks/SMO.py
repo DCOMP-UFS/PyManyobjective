@@ -53,7 +53,7 @@ class SMO():
 
         SMs = [] # surrogate models
         for _ in range(self.problem.numberOfObjectives):
-            SMs.append(RandomForestRegressor(n_estimators=0, max_depth=None, min_samples_split=2, random_state=0, criterion='mse', n_jobs=1, warm_start=True))
+            SMs.append(RandomForestRegressor(n_estimators=0, max_depth=None, min_samples_split=2, random_state=0, criterion='friedman_mse', n_jobs=1, warm_start=True))
 
         eval = self.sample_size
         while (eval <= self.t_parada):

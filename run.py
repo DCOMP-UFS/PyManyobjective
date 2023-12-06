@@ -117,7 +117,7 @@ def get_framework(framework, args_file):
     if framework == "SMO":
         return SMO(None, args["sample_size"], args["tmax"], args["tparada"], None)
     if framework == "SMB":
-        return SMB(None, None, args["sample_size"], args["tmax"], args["tparada"])
+        return SMB(None, args["sample_size"], args["tmax"], args["tparada"], None)
 
     print("unknown framework")
 
