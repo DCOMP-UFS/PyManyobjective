@@ -30,8 +30,8 @@ from pymoo.problems.many.dtlz import DTLZ5 as DTLZ5_pymoo
 from pymoo.problems.many.dtlz import DTLZ6 as DTLZ6_pymoo
 from pymoo.problems.many.dtlz import DTLZ7 as DTLZ7_pymoo
 
-from pymoo.factory import get_performance_indicator
 from pymoo.performance_indicator.kktpm import KKTPM
+from pymoo.factory import get_performance_indicator
 
 from pathlib import Path
 
@@ -115,7 +115,7 @@ def get_framework(framework, args_file):
         return M6(None, None, None, args["sample_size"], args["SEmax"], args["R"], KKTPM())
 
     if framework == "SMO":
-        return SMO(None, None, args["sample_size"], args["tmax"], args["tparada"])
+        return SMO(None, args["sample_size"], args["tmax"], args["tparada"], None)
     if framework == "SMB":
         return SMB(None, None, args["sample_size"], args["tmax"], args["tparada"])
 
