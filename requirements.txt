@@ -16,4 +16,5 @@ sklearn==0.0.post7
 sortedcontainers==2.4.0
 threadpoolctl==3.2.0
 pyDOE==0.3.8
-pymoo==0.3.2
+pymoo==0.4.2
+tensorflow==2.12.0

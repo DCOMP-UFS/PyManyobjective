@@ -1,0 +1,32 @@
+{
+    "Framework":
+    {   
+        "sample_size": 500,
+        "tau": 1,
+        "SEmax": 5000
+    },
+    "MEMO":
+    {
+        "maxEvaluations": 500,
+        "populationSize": 500,
+        "offspringSize": 500
+    },
+    "Crossover":
+    {
+        "distribution": 20,
+        "probability": 0.9
+    },
+    "Mutation":
+    {
+        "distribution": 20,
+        "probability": 0.5
+    },
+    "Selection":
+    {
+        "tournament_size": 250
+    },
+    "Problem":
+    {
+
+    }
+}

@@ -1,6 +1,7 @@
 import math
 import numpy as np
 from pyDOE2 import lhs
+from sklearn.linear_model import LinearRegression
 from smt.surrogate_models import KRG
 import sys
 
@@ -15,22 +16,32 @@ class SM_QF_layer(Problem):
     def __init__(self, SMs, numberOfObjectives, numberOfDecisionVariables, decisionVariablesLimit=None):
         super(SM_QF_layer, self).__init__(numberOfObjectives, numberOfDecisionVariables, decisionVariablesLimit)
         self.SMs = SMs
-
-    def evaluate(self, solution):
-        objectives = []
-        for i in range(len(self.SMs)):
-            objectives.append(self.SMs[i].predict_values(np.array([solution.decisionVariables]))[0][0])
-        solution.objectives = objectives
-        return solution
     
     def evaluate(self, population):
         x = population.decisionVariables
 
         obj_solutions = self.SMs[0].predict_values(x)
+        print(obj_solutions)
+        print(self.SMs[1].predict_values(x))
         for i in range(1, len(self.SMs)):
             obj_solutions = np.hstack((obj_solutions, self.SMs[i].predict_values(x)))
 
         population.objectives = obj_solutions
+
+class Scikit_layer(Problem):
+    def __init__(self, SMs, numberOfObjectives, numberOfDecisionVariables, decisionVariablesLimit=None):
+        super(Scikit_layer, self).__init__(numberOfObjectives, numberOfDecisionVariables, decisionVariablesLimit)
+        self.SMs = SMs
+
+    def evaluate(self, population):
+        x = population.getNotEvaluatedVars()
+
+        obj_solutions = np.transpose([self.SMs[0].predict(x)])
+        for i in range(1, len(self.SMs)):
+            print(self.SMs[i].predict(x))
+            obj_solutions = np.c_[obj_solutions, self.SMs[i].predict(x)]
+
+        population.setNotEvaluatedObjectives(obj_solutions)
 
 def lhs_to_solution(A, limits, numberOfObjectives, numberOfDecisionVariables):
     for i in range(numberOfDecisionVariables):
@@ -83,6 +94,7 @@ class M1():
                 # High-fidelity evaluations (functions)
                 self.problem.evaluate(Pk)
                 Fkm = np.transpose(Pk.objectives)
+                print(Fkm)
 
                 if t == 0:
                     eval = self.sample_size
@@ -92,17 +104,16 @@ class M1():
                 # Surrogate independently each objective function
                 SMs = []  # Surrogate models
                 for i in range(self.problem.numberOfObjectives):
-                    SM = KRG(print_training=False, print_prediction=False)
-                    SM.set_training_values(Pk.decisionVariables, Fkm[i])
-                    SM.train()
+                    SM = LinearRegression(n_jobs=-1)
+                    SM.fit(Pk.decisionVariables, Fkm[i])
                     SMs.append(SM)
                 # Update EMO to use the created surrogates as objective function
                 # Class SM_QF_layer above
-                self.EMO.problem = SM_QF_layer(SMs, self.problem.numberOfObjectives, self.problem.numberOfDecisionVariables, self.problem.decisionVariablesLimit)
+                self.EMO.problem = Scikit_layer(SMs, self.problem.numberOfObjectives, self.problem.numberOfDecisionVariables, self.problem.decisionVariablesLimit)
 
                 if k == 0:
                     # Initialize EMO’s population
-                    Pt = genPopulation(self.problem, samples=self.EMO.populationSize)
+                    Pt = genPopulation(self.problem, samples=self.EMO.populationSize, evaluate=False)
                 else:
                     fronts = paretoFront.fastNonDominatedSort(Pk)
                     fronts_order = np.argsort(fronts)
@@ -113,15 +124,16 @@ class M1():
 
             # Optimize surrogate model
             self.EMO.evaluations = 0
+            Pt.clearObjectives()
             self.EMO.execute(Pt)
             Pt = self.EMO.population
-            print(t + 1)
+            Pt.clearObjectives()
+            print("t:", t + 1)
             t += 1
 
         Pk.join(Pt)
         self.problem.evaluate(Pk)
 
         fronts = paretoFront.fastNonDominatedSort(Pk)
-        Pk.decisionVariables = Pk.decisionVariables[fronts == 0]
-        Pk.objectives = Pk.objectives[fronts == 0]
+        Pk.filter(fronts == 0)
         return Pk

@@ -5,98 +5,53 @@ Created on Fri Nov 20 00:32:09 2020
 @author: jadso
 """
 
+import numpy as np
 
 class ParetoFront:
-  DOMINATES = 1
-  DOMINATED_BY = -1
-  NON_DOMINATED = 0
-  paretoFront = None
-  front = list()
+  def dominance(self, p1_obj, p2_obj):
+    best_objectives = np.minimum(p1_obj, p2_obj)
+    p1_optimal = np.all(p1_obj == best_objectives)
+    p2_optimal = np.all(p2_obj == best_objectives)
 
-  def getInstance(self):
-    if self.paretoFront is None:
-      self.paretoFront = ParetoFront()
-      return self.paretoFront
-    else:
-      return self.paretoFront
-  
-  def getFront(self, index):
-    if index < self.size():
-      return self.getInstance().front[index]
-    else:
-      return list()
-  
-  def size(self):
-    return len(self.getInstance().front)
-  
-  def clearFront(self):
-    self.getInstance().front.clear()
-  
-  def addAll(self, solutionList):
-    self.getInstance().front.append(list())
-    for solution in solutionList:
-      self.getInstance().front[-1].append(solution.clone())
-  
-  def dominance(self, s1,s2):
-    count1 = 0
-    count2 = 0
-    
-    for i in range(s1.numberOfObjectives):
-      if s1.objectives[i] < s2.objectives[i]:
-        count1 += 1
-      elif s1.objectives[i] > s2.objectives[i]:
-        count2 += 1
-          
-    if count1 > 0 and count2 == 0:
-      return self.DOMINATED_BY
-    elif count1 == 0 and count2 > 0:
-      return self.DOMINATES
-    return self.NON_DOMINATED
+    if p1_optimal and ~p2_optimal:
+      return 1
+    elif ~p1_optimal and p2_optimal:
+      return -1
+    return 0
     
   def fastNonDominatedSort(self, population):
-    populationSize = len(population)
-    dominateMe     = [0 for _ in range(populationSize)]
-    iDominate      = [list() for _ in range(populationSize)]
-    front          = [list() for _ in range(populationSize+1)]
-    
-    for p in range(populationSize):
-      iDominate[p]  = list()
-      dominateMe[p] = 0
+    X = population.decisionVariables
+    Y = np.copy(population.objectives)
 
-    for p in range(populationSize-1):
-      for q in range(p+1, populationSize):
-        flagDominate = self.dominance(population[p], population[q])
-        if flagDominate == self.DOMINATED_BY:
-          iDominate[p].append(q)
-          dominateMe[q] += 1
-        elif flagDominate == self.DOMINATES:
-          iDominate[q].append(p)
-          dominateMe[p] += 1
-      
-    for p in range(populationSize):
-      if dominateMe[p] == 0:
-        front[0].append(p)
-    
-    rank = 0
-    while len(front[rank]) > 0:
-      for p in front[rank]:
-        for q in iDominate[p]:
-          dominateMe[q] -= 1
-          if dominateMe[q] == 0:
-            front[rank + 1].append(q)
-      rank += 1
+    times_dominated = np.zeros(X.shape[0])
+    dominated = np.full((X.shape[0], X.shape[0]), False)
+    fronts = np.ones(X.shape[0])
+    for i in range(X.shape[0]):
+      possibly_better = np.any(Y < Y[i], axis=1)
+      possibly_worse = np.any(Y > Y[i], axis=1)
 
-    self.clearFront()
-    
-    solutionList = list()
-    for i in front[0]:
-      solutionList.append(population[i].clone())
-      
-    self.addAll(solutionList)
+      better = np.logical_and(possibly_better, ~possibly_worse)
+      worse = np.logical_and(possibly_worse, ~possibly_better)
 
-    for i in range(1, len(front)):
-      if len(front[i]) > 0:
-        solutionList = list()
-        for j in front[i]:
-          solutionList.append(population[j].clone())
-        self.addAll(solutionList)
+      times_dominated[i] += np.sum(better)
+      dominated[i] = worse
+
+    cur_not_dominated = times_dominated <= 0
+    fronts[cur_not_dominated] = 0
+    cur_front = 0
+    visited = np.full(X.shape[0], False)
+    while np.sum(cur_not_dominated) > 0:
+      ac = np.sum(dominated[cur_not_dominated], axis=0)
+      times_dominated -= ac
+      visited = np.logical_or(visited, cur_not_dominated)
+      cur_not_dominated = times_dominated <= 0
+      cur_not_dominated = np.logical_and(cur_not_dominated, ~visited)
+      fronts[cur_not_dominated] = cur_front + 1
+      cur_front += 1
+    
+    return fronts
+  
+  def getBest(self, population):
+    best_objectives = np.min(population.objectives, axis=0)
+    sum_equals = np.sum(population.objectives == best_objectives, axis=1)
+    return population.decisionVariables[np.argsort(sum_equals)[0]]

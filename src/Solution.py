@@ -7,6 +7,7 @@ Classe de soluções to tipo real.
 @author: jadso
 """
 
+import math
 from numpy import random
 
 class Solution:
@@ -47,6 +48,14 @@ class Solution:
     for i, objective in enumerate(self.objectives):
       solution.objectives[i] = objective
 
+    solution.decisionVariables = self.decisionVariables
+    solution.objectives = self.objectives
     solution.evaluated = self.evaluated
       
     return solution
+
+  def calc_dist(self, other):
+    dist = 0
+    for i in range(self.numberOfDecisionVariables):
+      dist += math.pow(self.decisionVariables[i] - other.decisionVariables[i], 2)
+    return math.sqrt(dist)

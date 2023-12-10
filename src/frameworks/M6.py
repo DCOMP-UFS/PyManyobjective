@@ -1,8 +1,9 @@
 import math
 import numpy as np
-from pyDOE import lhs
+from pyDOE2 import lhs
 from smt.surrogate_models import KRG
 import sys
+from src.Population import genPopulation
 
 from src.problems.Problem import Problem
 from src.Solution import Solution
@@ -11,13 +12,8 @@ from src.ParetoFront import ParetoFront
 # manage Kriging input/output
 class SM_QF_layer(Problem):
     def __init__(self, SMs, numberOfObjectives, numberOfDecisionVariables, decisionVariablesLimit=None):
-        super(SM_QF_layer, self).__init__(numberOfObjectives, numberOfDecisionVariables, decisionVariablesLimit=None)
+        super(SM_QF_layer, self).__init__(numberOfObjectives, numberOfDecisionVariables, decisionVariablesLimit)
         self.SMs = SMs
-
-        lowerBounds = [0.0 for _ in range(numberOfDecisionVariables)]
-        upperBounds = [1.0 for _ in range(numberOfDecisionVariables)]
-    
-        self.decisionVariablesLimit = (lowerBounds, upperBounds)
 
     def evaluate(self, solution):
         objectives = []
@@ -25,17 +21,15 @@ class SM_QF_layer(Problem):
             objectives.append(self.SMs[i].predict_values(np.array([solution.decisionVariables]))[0][0])
         solution.objectives = objectives
         return solution
+    
+    def evaluate(self, population):
+        x = population.decisionVariables
 
-def lhs_to_solution(A, numberOfObjectives, numberOfDecisionVariables):
-    B = list()
-    for a in A:
-        b = Solution(numberOfObjectives, numberOfDecisionVariables)
-        decisionVariables = []
-        for x in a:
-            decisionVariables.append(x)
-        b.decisionVariables = decisionVariables
-        B.append(b)
-    return B
+        obj_solutions = self.SMs[0].predict_values(x)
+        for i in range(1, len(self.SMs)):
+            obj_solutions = np.hstack((obj_solutions, self.SMs[i].predict_values(x)))
+
+        population.objectives = obj_solutions
 
 class M6():
     def __init__(self, problem, problem_np, EMO, sample_size, SEmax, R, kktpm):
@@ -48,66 +42,62 @@ class M6():
         self.kktpm = kktpm
 
     def clustering(self, population):
-        for i in range(len(population)):
+        P_obj = population.objectives
+
+        P_cluster = []
+        for i in range(len(P_obj)):
             best_dist = None
             cluster_id = -1
-            objs = np.array(population[i].objectives)
             for j in range(len(self.R)):
-                r = np.array(self.R[j])
-                dist = np.linalg.norm(np.cross(r, -objs)) / np.linalg.norm(r)
+                dist = np.linalg.norm(np.cross(np.array(self.R[j]), -P_obj[i])) / np.linalg.norm(np.array(self.R[j]))
                 if cluster_id == -1:
                     best_dist = dist
                     cluster_id = j
                 elif dist < best_dist:
                     best_dist = dist
                     cluster_id = j
-            population[i].cluster = cluster_id
+            P_cluster.append(cluster_id)
+        
+        population.cluster = P_cluster
 
     def run(self):
-        Pk = lhs_to_solution(lhs(self.problem.numberOfDecisionVariables, samples=self.sample_size), self.problem.numberOfObjectives, self.problem.numberOfDecisionVariables)
+        Pk = genPopulation(self.problem, self.sample_size)
         paretoFront = ParetoFront()
 
-        eval = 0
+        eval = self.sample_size
         while (eval < self.SEmax):
-            for p in Pk:
-                self.problem.evaluate(p)
+            self.problem.evaluate(Pk)
             self.clustering(Pk)
 
-            X = []
-            for p in Pk:
-                X.append(p.decisionVariables)
+            X = Pk.decisionVariables
 
-            fitness = self.kktpm.calc(X=np.array(X), problem=self.problem_np, ideal_point=self.problem.ideal_point())
-
-            eval = len(Pk)
+            fitness = self.kktpm.calc(X=X, problem=self.problem_np, ideal_point=self.problem.ideal_point())
 
             not_nan = ~np.isnan(fitness.flatten())
 
             SM = KRG(print_training=False, print_prediction=False)
-            SM.set_training_values(np.array(X)[not_nan], fitness[not_nan])
+            SM.set_training_values(X[not_nan], fitness[not_nan])
             SM.train()
             SMs = [SM]
             self.EMO.problem = SM_QF_layer(SMs, 1, self.problem.numberOfDecisionVariables, self.problem.decisionVariablesLimit)
 
+            Pk.numberOfObjectives = 1
+            Pk.objectives = np.full((Pk.decisionVariables.shape[0], 1), np.array([0]))
+
             self.EMO.evaluations = 0
-            self.EMO.execute(set(Pk))
-            Pt = []
-            for p in self.EMO.population:
-                s = Solution(self.problem.numberOfObjectives, self.problem.numberOfDecisionVariables)
-                s.decisionVariables = p.decisionVariables
-                Pt.append(s)
+            self.EMO.execute(Pk)
+            Pt = self.EMO.population
 
+            Pk.numberOfObjectives = self.problem.numberOfObjectives
 
-            if len(Pt) + eval > self.SEmax:
-                Pt = Pt[:self.SEmax - eval]
-            Pk = list(set(Pk + Pt))
-            eval = len(Pk)
+            if Pt.decisionVariables.shape[0] + eval > self.SEmax:
+                Pt.decisionVariables = Pt.decisionVariables[:self.SEmax - eval]
+            Pk.join(Pt)
+            eval += Pt.decisionVariables.shape[0]
 
-        Pfinal = Pk
+        self.problem.evaluate(Pk)
 
-        # evaluate Pfinal using objective function
-        for p in Pfinal:
-            self.problem.evaluate(p)
-
-        paretoFront.fastNonDominatedSort(Pfinal)
-        return paretoFront.getInstance().front[0]
+        fronts = paretoFront.fastNonDominatedSort(Pk)
+        Pk.decisionVariables = Pk.decisionVariables[fronts == 0]
+        Pk.objectives = Pk.objectives[fronts == 0]
+        return Pk

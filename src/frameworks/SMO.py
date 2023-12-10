@@ -1,6 +1,6 @@
 import math
 import numpy as np
-from pyDOE import lhs
+from pyDOE2 import lhs
 from sklearn.ensemble import RandomForestRegressor
 import sys
 
