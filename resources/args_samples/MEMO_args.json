@@ -1,5 +1,5 @@
 {
-    "maxEvaluations": 20,
+    "maxEvaluations": 10000,
     "populationSize": 10,
     "offspringSize": 10
 }

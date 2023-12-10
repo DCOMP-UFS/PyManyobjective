@@ -1,4 +1,4 @@
-from run_hyper import run
+from run import run
 
 run("M1", "SVM_hyperparameters", "GA", "SBX", "Polynomial", "Binary", "CrowdingDistance",
     1, 

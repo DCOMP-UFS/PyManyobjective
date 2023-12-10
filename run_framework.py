@@ -1,4 +1,4 @@
-from run_keras import run
+from run import run
 
 run("M1", "NN_MNIST", "NSGAII", "SBX", "Polynomial", "Binary", "CrowdingDistance",
     1, 

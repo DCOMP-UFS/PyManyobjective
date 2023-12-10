@@ -12,7 +12,7 @@ class Population:
         self.__decisionVariables = np.zeros((0, numberOfDecisionVariables))
         self.__objectives = np.zeros((0, numberOfObjectives))
 
-        self.evaluated = np.zeros(0, dtype=np.bool)
+        self.evaluated = np.zeros(0, dtype=np.bool_)
         
         self.cluster = None
     
@@ -25,7 +25,7 @@ class Population:
         assert(X.shape[1] == self.numberOfDecisionVariables)
         self.__decisionVariables = X
         self.__objectives = np.zeros((X.shape[0], self.numberOfObjectives))
-        self.evaluated = np.zeros(X.shape[0], dtype=np.bool)
+        self.evaluated = np.zeros(X.shape[0], dtype=np.bool_)
     
     @property
     def objectives(self):
@@ -39,7 +39,7 @@ class Population:
         assert(Y.shape[0] == self.__decisionVariables.shape[0])
         assert(Y.shape[1] == self.numberOfObjectives)
         self.__objectives = Y
-        self.evaluated = np.ones(Y.shape[0], dtype=np.bool)
+        self.evaluated = np.ones(Y.shape[0], dtype=np.bool_)
 
     def getNotEvaluatedVars(self):
         notEvaluated = ~self.evaluated

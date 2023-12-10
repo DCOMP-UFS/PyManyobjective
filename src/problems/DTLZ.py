@@ -19,7 +19,7 @@ class DTLZ1(Problem):
     
         lowerBounds = [0.0 for _ in range(numberOfDecisionVariables)]
         upperBounds = [1.0 for _ in range(numberOfDecisionVariables)]
-        decisionVariablesLimit = (lowerBounds, upperBound)
+        decisionVariablesLimit = (lowerBounds, upperBounds)
     
         super(DTLZ1,self).__init__(numberOfObjectives,
                                numberOfDecisionVariables,
@@ -38,7 +38,7 @@ class DTLZ1(Problem):
     def obj_func(self, X_, g, alpha=1):
         f = []
 
-        for i in range(0, self.n_objs):
+        for i in range(0, self.numberOfObjectives):
             _f = (1 + g)
             _f *= np.prod(np.cos(np.power(X_[:, :X_.shape[1] - i], alpha) * np.pi / 2.0), axis=1)
             if i > 0:
@@ -52,11 +52,11 @@ class DTLZ1(Problem):
     def evaluate(self, population):
         x = population.decisionVariables
 
-        X_, X_M = x[:, :self.n_objs - 1], x[:, self.n_objs - 1:]
+        X_, X_M = x[:, :self.numberOfObjectives - 1], x[:, self.numberOfObjectives - 1:]
         g = self.g1(X_M)
 
         f = []
-        for i in range(0, self.n_objs):
+        for i in range(0, self.numberOfObjectives):
             _f = 0.5 * (1 + g)
             _f *= np.prod(X_[:, :X_.shape[1] - i], axis=1)
             if i > 0:
@@ -73,7 +73,7 @@ class DTLZ2(DTLZ1):
     def evaluate(self, population):
         x = population.decisionVariables
 
-        X_, X_M = x[:, :self.n_objs - 1], x[:, self.n_objs - 1:]
+        X_, X_M = x[:, :self.numberOfObjectives - 1], x[:, self.numberOfObjectives - 1:]
         g = self.g2(X_M)
         
         population.objectives = self.obj_func(X_, g, alpha=1)
