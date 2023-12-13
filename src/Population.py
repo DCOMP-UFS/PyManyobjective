@@ -54,7 +54,7 @@ class Population:
     
     def clearObjectives(self):
         self.__objectives = np.zeros(self.__objectives.shape)
-        self.evaluated = np.zeros(self.evaluated.shape, dtype=np.bool)
+        self.evaluated = np.zeros(self.evaluated.shape, dtype=np.bool_)
 
     def join(self, o):
         assert(o.numberOfDecisionVariables == self.numberOfDecisionVariables)

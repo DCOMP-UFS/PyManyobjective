@@ -120,8 +120,6 @@ class M1():
 
         Pk.join(Pt)
         self.problem.evaluate(Pk)
-
         fronts = paretoFront.fastNonDominatedSort(Pk)
-        Pk.decisionVariables = Pk.decisionVariables[fronts == 0]
-        Pk.objectives = Pk.objectives[fronts == 0]
+        Pk.filter(fronts == 0)
         return Pk

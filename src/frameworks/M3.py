@@ -107,6 +107,5 @@ class M3():
         P.numberOfObjectives = self.problem.numberOfObjectives
         self.problem.evaluate(P)
         fronts = paretoFront.fastNonDominatedSort(P)
-        P.decisionVariables = P.decisionVariables[fronts == 0]
-        P.objectives = P.objectives[fronts == 0]
+        P.filter(fronts == 0)
         return P

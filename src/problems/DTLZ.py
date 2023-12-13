@@ -16,7 +16,7 @@ class DTLZ1(Problem):
   # Construtor
     def __init__(self, numberOfObjectives=3, k=5, decisionVariablesLimit=None):
         numberOfDecisionVariables = k + numberOfObjectives - 1
-    
+        self.k = k
         lowerBounds = [0.0 for _ in range(numberOfDecisionVariables)]
         upperBounds = [1.0 for _ in range(numberOfDecisionVariables)]
         decisionVariablesLimit = (lowerBounds, upperBounds)

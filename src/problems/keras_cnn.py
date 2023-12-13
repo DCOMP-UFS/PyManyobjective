@@ -6,7 +6,6 @@ from keras.models import Sequential
 from keras.layers import Conv2D, AveragePooling2D, MaxPooling2D, Dense, Flatten, Dropout
 from tensorflow.keras.optimizers import Adam, SGD
 from keras.datasets import mnist
-from keras.utils import np_utils
 
 from sklearn.metrics import accuracy_score
 

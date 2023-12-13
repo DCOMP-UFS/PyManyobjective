@@ -27,3 +27,5 @@ def plot_from_file(file_name):
     if len(points[0]) == 3:
         three_dim = True
     plot(points, file_name, three_dim=three_dim)
+
+plot_from_file('M6_DTLZ2_NSGAII')

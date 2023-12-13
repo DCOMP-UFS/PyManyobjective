@@ -29,7 +29,9 @@ from src.problems.keras_cnn import Keras_CNN
 from src.problems.SVM_hyperparameters import SVM_hyperparameters
 from src.problems.SVM_hyperparameters_sen_spe import SVM_hyperparameters_sen_spe
 from src.problems.SVM_hyperparameters_sen_spe_2 import SVM_hyperparameters_sen_spe_2
-from src.problems.DTLZ import DTLZ2
+from src.problems.DTLZ import DTLZ2, DTLZ1
+
+from pymoo.problems.many.dtlz import DTLZ2 as DTLZ2_pymoo
 
 from tensorflow.keras import utils
 
@@ -129,6 +131,15 @@ def interval_string_to_average_int(s):
     interval = [float(x) for x in s.split('-')]
     return (interval[0] + interval[1]) / 2.0
 
+def get_problem_pymoo(problem, args_file):
+    args = None
+    with open(args_file) as fargs:
+        args = json.load(fargs)["Problem"]
+    args["n"] = args["m"] + args["k"] - 1
+
+    if problem == "DTLZ2":
+        return DTLZ2_pymoo(args["n"], args["m"])
+
 def get_problem(problem, args_file):
     args = None
     with open(args_file) as fargs:
@@ -136,6 +147,8 @@ def get_problem(problem, args_file):
 
     if problem == "DTLZ2": 
         return DTLZ2(args["m"], args["k"])
+    if problem == "DTLZ1": 
+        return DTLZ1(args["m"], args["k"])
     if problem == "NN_MNIST":
         digits = datasets.load_digits()
         n_samples = len(digits.images)
@@ -312,6 +325,10 @@ def run(framework, problem, moea, crossover, mutation, selection, sparsity, n, a
 
     Framework = get_framework(framework, args_file)
     Framework.problem = Problem
+
+    if framework == "M6":
+        Framework.problem_np = get_problem_pymoo(problem, args_file)
+        MOEA.R = Framework.R
     Framework.EMO = MOEA
 
     for i in range(n):

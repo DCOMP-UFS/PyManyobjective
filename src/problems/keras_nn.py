@@ -1,15 +1,14 @@
 from src.problems.Problem import Problem
 from src.Solution import Solution
 
+import numpy as np
+
 import keras
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.datasets import mnist
-from keras.utils import np_utils
 
 from sklearn.metrics import accuracy_score
-
-import numpy as np
 
 class Keras_NN(Problem):
     def __init__(self, X_train, y_train, X_test, y_test, input_dim, n_classes):
@@ -64,7 +63,7 @@ class Keras_NN(Problem):
     def evaluate(self, solution):
         params = solution.decisionVariables
 
-        hidden_layers = int(round(params[0] * 10))
+        hidden_layers = int(np.round(params[0] * 10))
         neurons = int(round(params[1] * 100))
         loss = self.losses[int(round(params[2]))]
         optimizer = self.optimizers[int(round(params[3]))]
