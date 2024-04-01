@@ -37,7 +37,7 @@ class NSGAIII(Algorithm):
     self.referencePoints = refPoint.generateReferencePoints(self.problem.numberOfObjectives,
                                                             self.numberOfDivisions)
     
-    populationSize = len(self.referencePoints)
+    populationSize = 5
     while populationSize%4 > 0:
       populationSize += 1
       
@@ -88,21 +88,21 @@ class NSGAIII(Algorithm):
       minObj = np.Inf
       minInd = None
       
-      for s in fronts[0]:
+      for s in self.population.objectives[fronts==0]:
         if s.objectives[i] < minObj:
           minObj = s.objectives[i]
           minInd = s.clone()
           
       ideal_point.append(minInd)
       
-      for s in fronts[0]:
+      for s in self.population.objectives[fronts==0]:
         s.objectives[i] -= minObj
     
     for i in range(m):
       minASF = np.Inf
       minInd = None
       
-      for s in fronts[0]:
+      for s in self.population.objectives[fronts==0]:
         asf = self.ASF(s,i)
         
         if asf < minASF:
@@ -220,8 +220,8 @@ class NSGAIII(Algorithm):
       
     return population
   
-  def execute(self):
-    self.initializePopulation()
+  def execute(self, population=None):
+    self.initializePopulation(population=population)
     
     while self.evaluations <= self.maxEvaluations:
       if (self.evaluations % 1) == 0:
@@ -229,12 +229,12 @@ class NSGAIII(Algorithm):
     
       self.createOffspring()
       
-      mixedPopulation = self.population.union(self.offspring.copy())
+      self.population.join(self.offspring)
       
-      self.population.clear()
-      self.offspring.clear()
+      #self.offspring.clearObjectives()
       
-      self.paretoFront.fastNonDominatedSort(list(mixedPopulation))
+      
+      fronts = self.paretoFront.fastNonDominatedSort(self.population)
       
       population = list()
       fronts     = list()
@@ -242,7 +242,7 @@ class NSGAIII(Algorithm):
       popsize    = 0
       rank       = 0
       
-      while popsize < self.populationSize and rank < self.paretoFront.size():
+      while popsize < self.populationSize and rank < len(self.population.decisionVariables[fronts==0]):
         front = self.paretoFront.getFront(rank)
         fronts.append(front)
         popsize += len(front)

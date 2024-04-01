@@ -17,12 +17,12 @@ class Algorithm:
   # Construtor
   def __init__(self, problem,
                maxEvaluations,
-               populationSize,
                offSpringPopulationSize,
                crossover,
                mutation,
                selection,
-               sparsity):
+               sparsity,
+               populationSize=5):
     
     self.problem                 = problem
     self.maxEvaluations          = maxEvaluations
@@ -64,14 +64,14 @@ class Algorithm:
 
     self.evaluations += parents1.decisionVariables.shape[0] + parents2.decisionVariables.shape[0]
       
-  def initializePopulation(self):
+  def initializePopulation(self, population=None):
     self.population = genPopulation(self.problem, self.populationSize)
   
   def createOffspring(self):
     self.offspring = Population(self.problem.numberOfObjectives, self.problem.numberOfDecisionVariables)
     self.offspring.decisionVariables = np.zeros((0, self.problem.numberOfDecisionVariables))
     while self.offspring.decisionVariables.shape[0] < self.offSpringPopulationSize:
-      self.evolute(evaluate=False)
+        self.evolute(evaluate=False)  
     self.problem.evaluate(self.offspring)
   
   # Classes abstratas

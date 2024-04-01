@@ -20,14 +20,14 @@ class NSGAII(Algorithm):
                mutation,
                selection,
                sparsity):
-    super(NSGAII,self).__init__(problem,
-                                maxEvaluations,
-                                populationSize,
-                                offSpringPopulationSize,
-                                crossover,
-                                mutation,
-                                selection,
-                                sparsity)
+    super(NSGAII,self).__init__(problem=problem,
+                                maxEvaluations=maxEvaluations,
+                                populationSize=populationSize,
+                                offSpringPopulationSize=offSpringPopulationSize,
+                                crossover=crossover,
+                                mutation=mutation,
+                                selection=selection,
+                                sparsity=sparsity)
     
   def execute(self, initialPopulation=None):
     if initialPopulation == None:
