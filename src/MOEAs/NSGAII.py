@@ -36,15 +36,16 @@ class NSGAII(Algorithm):
       self.population = initialPopulation
       
     self.problem.evaluate(self.population)
-
+    
     while self.evaluations < self.maxEvaluations:
+      
       if (self.evaluations % 1000) == 0:
         print("Evaluations: " + str(self.evaluations) + " de " + str(self.maxEvaluations) + "...")
       
       self.createOffspring()
 
       self.population.join(self.offspring)
-
+      
       fronts = self.paretoFront.fastNonDominatedSort(self.population)
       fronts_order = np.argsort(fronts)
 

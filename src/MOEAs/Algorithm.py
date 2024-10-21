@@ -71,7 +71,11 @@ class Algorithm:
     self.offspring = Population(self.problem.numberOfObjectives, self.problem.numberOfDecisionVariables)
     self.offspring.decisionVariables = np.zeros((0, self.problem.numberOfDecisionVariables))
     while self.offspring.decisionVariables.shape[0] < self.offSpringPopulationSize:
-        self.evolute(evaluate=False)  
+        self.evolute(evaluate=False) 
+        for ind in self.offspring.decisionVariables:
+            for i in range(len(ind)):
+                if np.isnan(ind[i]):
+                    ind[i] = 0 
     self.problem.evaluate(self.offspring)
   
   # Classes abstratas

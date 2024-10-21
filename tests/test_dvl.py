@@ -1,3 +1,5 @@
+import time
+
 from src.problems.DTLZ import DTLZ2
 from src.dvl.DLV import DVLFramework, save_obj_space
 from src.MOEAs.NSGAII import NSGAII
@@ -9,6 +11,8 @@ from src.problems.Problem import Problem
 from src.MOEAs.Algorithm import Algorithm
 from scipy.stats.qmc import LatinHypercube, QMCEngine
 from src.Solution import Solution
+
+from run_hyper import get_problem, save
 
 def run():
     """ pg. 82
@@ -34,14 +38,15 @@ def run():
     n_var = 12
     n_obj = 10
 
-    evals_allowed = 250
+    evals_allowed = 500
     pop_size    = 100
     ProblemClass = DTLZ2
 # << Config Vars
 
 
     # does this class hold state? just in case will create 2
-    dvl_problem   =  ProblemClass(n_obj,k=n_var-n_obj+1)
+    #dvl_problem   =  ProblemClass(n_obj,k=n_var-n_obj+1)
+    dvl_problem = get_problem(problem='SVM_hyperparameters_breast', args_file='resources/args_samples/M1_25_1000.json')
 
     """ pg. 86
         For the NSGA-III, using simulated binary
@@ -57,6 +62,7 @@ def run():
         >> might need a bit for experience with scikit learn models
     """
     model = LR()
+
     framework = DVLFramework( 
         pop_size=pop_size, 
         max_eval=evals_allowed, 
@@ -65,9 +71,15 @@ def run():
         problem=dvl_problem
     )
 
-    framework.execute()
+    for i in range(25):
+        t1 = time.process_time()
+        P = framework.execute()
+        t2 = time.process_time()
+        T = t2 - t1
     
-    #save_obj_space("teste_fig", framework.moea.population.objectives, None)
+        save("DVL_500", str(i), P.decisionVariables.tolist(), P.objectives.tolist(), T)
+    
+    #save_obj_space("teste_fig", P.objectives, None)
     """pg. 87
         DVL Framework outperformed the MOEAs especially in the initial
         evaluations, approaching zero in the difference of hypervolume when it reaches 100000 objective

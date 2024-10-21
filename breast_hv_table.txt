@@ -1,0 +1,18 @@
+\begin{table}[]
+	\centering
+	\caption{Hipervolume - Breast Cancer}
+	\label{tab:hvbreast}
+	\begin{tabular}{c|c|c|c}
+	\hline
+	Algoritmo & Num. avaliações & Média Hipervolume & Std. Hipervolume \\
+	\hline
+	DVL & 100 & 0.4135 & 0.011 \\
+	M1 25\% & 100 & 0.3233 & 0.0729 \\
+	NSGA-II & 100 & 0.3919 & 0.0113 \\
+	TDEAP & 100 & 0.4152 & 0.0042 \\
+	DVL & 500 & 0.4255 & 0.0103 \\
+	M1 25\% & 500 & 0.4326 & 0.0219 \\
+	NSGA-II & 500 & 0.4263 & 0.0087 \\
+	TDEAP & 500 & 0.4381 & 0.0094 \\
+	\end{tabular}
+\end{table}

@@ -8,12 +8,12 @@ def scalar_dom_ea_dp(init_size, toolbox, mu, lambda_, max_evaluations,
                      category_size=300, f_min=None, f_max=None):
     pop = toolbox.population(init_size)   # initialize the population
     toolbox.normalize_variables(pop)   # normalize all decision variables to [-1, 1]
-
+    evaluated = np.zeros(init_size, dtype=np.bool_)
+    
     f_min, f_max = init_obj_limits(f_min, f_max)   # read the limits of the objectives
 
-    full_evaluate(pop, toolbox, f_min, f_max)     # evaluate all the solutions in the initial population
+    full_evaluate(pop, toolbox, evaluated, f_min, f_max)     # evaluate all the solutions in the initial population
     evaluations = init_size
-
     archive = []
     archive.extend(pop)    # add the evaluated solutions to archive
 
@@ -43,8 +43,9 @@ def scalar_dom_ea_dp(init_size, toolbox, mu, lambda_, max_evaluations,
 
         if individual is None:
             continue
-
-        full_evaluate([individual], toolbox, f_min, f_max)  # evaluate the selected solution
+        #print(individual.fitness.values)
+        evaluated = np.zeros(1, dtype=np.bool_)
+        full_evaluate([individual], toolbox, evaluated, f_min, f_max)  # evaluate the selected solution
         evaluations += 1
 
         archive.append(individual)

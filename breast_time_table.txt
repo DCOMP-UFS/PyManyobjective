@@ -1,0 +1,18 @@
+\begin{table}[]
+	\centering
+	\caption{Tempo - Breast Cancer}
+	\label{tab:timebreast}
+	\begin{tabular}{c|c|c|c}
+	\hline
+	Algoritmo & Num. avaliações & Média Tempo & Std. Tempo \\
+	\hline
+	DVL & 100 & 2.7081 & 0.2046 \\
+	M1 25\% & 100 & 1.2775 & 0.1325 \\
+	NSGA-II & 100 & 2.9537 & 0.4391 \\
+	TDEAP & 100 & 1306.7875 & 181.4085 \\
+	DVL & 500 & 7.9594 & 0.7935 \\
+	M1 25\% & 500 & 2.4219 & 0.1713 \\
+	NSGA-II & 500 & 11.3625 & 2.0022 \\
+	TDEAP & 500 & 10934.6044 & 1662.9541 \\
+	\end{tabular}
+\end{table}

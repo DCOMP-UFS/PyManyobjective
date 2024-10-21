@@ -23,8 +23,8 @@ class SVM_hyperparameters_sen_spe_2(Problem):
 
         n_objs = 2
 
-        super(SVM_hyperparameters_sen_spe_2, self).__init__(2,
-                                n_objs,
+        super(SVM_hyperparameters_sen_spe_2, self).__init__(n_objs,
+                                2,
                                 (lowerBounds, upperBounds))
         self.problem = "SVM_hyperparameters_sen_spe_2"
 
@@ -35,9 +35,16 @@ class SVM_hyperparameters_sen_spe_2(Problem):
         self.hi_values = np.array([1e2, 2*1e1])
         self.resize_consts = self.hi_values - self.lo_values
 
-    def evaluate(self, population):
+    def evaluate(self, population, evaluated=None):
         fake_params = population.getNotEvaluatedVars()
-
+        '''
+        notEvaluated = ~evaluated
+        fake_params = []
+        for i in range(len(population)):
+            if notEvaluated[i]:
+                fake_params.append(population[i])
+        fake_params = np.array(fake_params)
+        '''
         params = fake_params * self.resize_consts + self.lo_values
 
         all_means = np.zeros((params.shape[0], 2))
@@ -50,7 +57,13 @@ class SVM_hyperparameters_sen_spe_2(Problem):
             all_means[i][0] = 1.0 - sensitivity_scores.mean()
             all_means[i][1] = 1.0 - specificity_scores.mean()
         population.setNotEvaluatedObjectives(all_means)
-
+        '''
+        for i in range(len(population)):
+            if notEvaluated[i]:
+                population[i].fitness.values = all_means[i]
+        
+        evaluated[notEvaluated] = True
+        '''
     def get_config_accuracy(self, config):
         params = config * self.resize_consts + self.lo_values
         C = params[0]
@@ -78,7 +91,8 @@ class SVM_hyperparameters_sen_spe_2(Problem):
         precision = precisions.mean()
         sensitivity = sensitivities.mean()
         F_mean = 2 * precision * sensitivity / (precision + sensitivity)
-        return F_mean
+        
+        return 0.0 if np.isnan(F_mean) else F_mean
 
 
 

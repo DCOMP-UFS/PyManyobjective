@@ -13,6 +13,7 @@ from src.MOEAs.sparsities.CrowdingDistance import CrowdingDistance
 from src.problems.Problem import Problem
 from src.MOEAs.Algorithm import Algorithm
 from src.dvl.Model import Model
+from src.ParetoFront import ParetoFront
 
 
 class DVLFramework:
@@ -45,7 +46,7 @@ class DVLFramework:
         k:int = self.pop_size
         e:int = self.max_eval
         P_est, objectives = self.execute_dvl(sampling=sampling, dataset_size=k)
-
+        #print(f'\n\n\n\n{P_est} {objectives}\n\n\n')
         # 'd' evaluations left (calls to objective functions) to complete the framework
         d = e - (k + len(P_est.decisionVariables))
         P = self.execute_moea(P_est, objectives, e, d)
@@ -56,8 +57,9 @@ class DVLFramework:
     # pg. 80 "The necessity of using the hypervolume inside the algorithm is eliminated"
     def execute_dvl(self, sampling: QMCEngine, dataset_size: int, reference_points=None):
         Pt = Population(self.problem.numberOfObjectives, self.problem.numberOfDecisionVariables)
-        Pk = genPopulation(self.problem, samples=self.problem.numberOfDecisionVariables)
-
+        Pk = genPopulation(self.problem, samples=100)
+        
+        #print("objs", Pk.objectives)
         """@obs
             .evaluate doesnt take a array as input
             also it doesnt return objetives, it returns the same solution 
@@ -73,8 +75,18 @@ class DVLFramework:
                 Genrate_reference takes too long to iterate over, 
                 in the paper it seems that it uses a set a references points already baked
             """
-            reference_points = np.asarray(
-                generate_reference_points(n_obj=self.problem.numberOfObjectives, n_div_per_obj=2)
+            x = 0
+            y = 1
+            arr = []
+            arr.append((1,0))
+            for _ in range(50):
+                arr.append((x,y))
+                x += 0.02
+                y = (1-(x*x)) ** 0.5
+                
+
+            reference_points = np.asarray( arr
+                #generate_reference_points(n_obj=self.problem.numberOfObjectives, n_div_per_obj=2)
             )
         
         """@obs 
@@ -85,17 +97,21 @@ class DVLFramework:
             M.train(solutions, objectives)
         """
         # ONE model is g(Y) = X, correct?
+        #print("Ref", reference_points)
         self.model.train(Pk.decisionVariables, Pk.objectives)
 
         # Estimation for a population as close as possible to the Pareto-optimal front
         P_estimated = list()
         for r in reference_points:
-            P_estimated.append(np.array(self.model.predict(np.matrix(r)).flatten()))
-        
-        P_estimated = np.array(P_estimated)
-        Pt.__decisionVariables = P_estimated
-        self.problem.evaluate(Pt)
+            point = np.array(self.model.predict(np.matrix(r)).flatten())
+            if point[0] > 0 and point[1] > 0:
+                P_estimated.append(point)
 
+        P_estimated = np.array(P_estimated)
+        print("Estimado", P_estimated)
+        Pt.decisionVariables = P_estimated  
+        self.problem.evaluate(Pt)
+        
         return Pt, Pt.objectives
 
     # DLV HyperVolume Based Implementation
@@ -148,7 +164,7 @@ class DVLFramework:
 
     def execute_moea(self, population, objectives, max_evaluation, d):
         crossover = SBXCrossover(20.0, 0.9)
-        mutation_probability = 1.0 / self.problem.numberOfDecisionVariables
+        mutation_probability = 0.5 #1.0 / self.problem.numberOfDecisionVariables
         mutation = PolynomialMutation(mutation_probability, 20.0)
         selection = BinaryTournament(2)
         self.moea = self.ClassMoea(
@@ -161,8 +177,14 @@ class DVLFramework:
                 selection=selection,
                 sparsity=CrowdingDistance(),
             )
-
-        return self.moea.execute()
+        pf = ParetoFront()
+        
+        self.moea.execute(population)
+        Pk = self.moea.population
+        fronts = pf.fastNonDominatedSort(Pk)
+        Pk.filter(fronts == 0)
+        
+        return Pk
 
 
     def find_closest_solutions(

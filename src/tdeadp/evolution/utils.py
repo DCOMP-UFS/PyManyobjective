@@ -6,9 +6,9 @@ from src.tdeadp.evolution.dom import pareto_dominance
 
 
 # evaluate the objective functions and then conduct clustering
-def full_evaluate(individuals, toolbox, f_min, f_max):
-    fitness_values = toolbox.evaluate(individuals)
-
+def full_evaluate(individuals, toolbox, evaluated, f_min, f_max):
+    fitness_values = toolbox.evaluate(individuals, evaluated)
+    fitness_values = [ind.fitness.values for ind in individuals]
     for ind, fv in zip(individuals, fitness_values):
         ind.fitness.values = fv
 

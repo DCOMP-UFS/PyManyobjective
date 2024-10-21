@@ -1,0 +1,18 @@
+\begin{table}[]
+	\centering
+	\caption{Class - Breast Cancer}
+	\label{tab:classbreast}
+	\begin{tabular}{c|c|c|c|c|c}
+	\hline
+	Algoritmo & Num. avaliações & Média Precisão & Std. Precisão & Média AUC & Média F-measure \\
+	\hline
+	DVL  & 100 & 0.734 & 0.0456 & 0.6826 & 0.1438 \\
+	M1 25\% & 100 & 0.7367 & 0.0355 & 0.8778 & 0.1147 \\
+	NSGA-II & 100 & 0.6654 & 0.0338 & 0.8972 & 0.4527 \\
+	TDEAP & 100 & 0.6994 & 0.0473 & 0.9266 & 0.3361 \\
+	DVL  & 500 & 0.7433 & 0.038 & 0.6182 & 0.0945 \\
+	M1 25\% & 500 & 0.7379 & 0.0431 & 0.752 & 0.0965 \\
+	NSGA-II & 500 & 0.6785 & 0.0259 & 0.8816 & 0.461 \\
+	TDEAP & 500 & 0.7387 & 0.042 & 0.9397 & 0.1112 \\
+	\end{tabular}
+\end{table}
