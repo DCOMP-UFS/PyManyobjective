@@ -44,6 +44,7 @@ class CrowdingDistance(Sparsity):
       front[populationSize-1].sparsity = 1e10
       
       for j in range(1, populationSize-1):
+        
         distance = front[j+1].objectives[i] - front[j-1].objectives[i]
         distance = distance / (objectiveMax - objectiveMin)
         distance += front[j].sparsity

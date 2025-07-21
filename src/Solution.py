@@ -34,12 +34,12 @@ class Solution:
     if isinstance(other, Solution):
       return self.decisionVariables == other.decisionVariables
     return False
+  
   def __hash__(self):
     return hash(tuple(self.decisionVariables))
 
   def clone(self):
-    solution = Solution(self.numberOfObjectives,
-                        self.numberOfDecisionVariables)
+    solution = Solution(self.numberOfObjectives, self.numberOfDecisionVariables)
     
     for i, variable in enumerate(self.decisionVariables):
       solution.decisionVariables[i] = variable

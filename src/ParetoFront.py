@@ -34,6 +34,7 @@ class ParetoFront:
   
   def addAll(self, solutionList):
     self.getInstance().front.append(list())
+    
     for solution in solutionList:
       self.getInstance().front[-1].append(solution.clone())
   
@@ -46,7 +47,8 @@ class ParetoFront:
         count1 += 1
       elif s1.objectives[i] > s2.objectives[i]:
         count2 += 1
-          
+  # Talvez ele esteja retirando a possibilidade de, em 3 objetivos, s1 for melhor em 2 e s2 melhor em apenas 1. assim s1 domina s2
+  # A não ser que o framework trabalhr com até dois objetivos, aí necessariamente devemos ter dominancia se é melhor nos 2 objetivos
     if count1 > 0 and count2 == 0:
       return self.DOMINATED_BY
     elif count1 == 0 and count2 > 0:
@@ -64,6 +66,7 @@ class ParetoFront:
       dominateMe[p] = 0
 
     for p in range(populationSize-1):
+      
       for q in range(p+1, populationSize):
         flagDominate = self.dominance(population[p], population[q])
         if flagDominate == self.DOMINATED_BY:
@@ -95,6 +98,7 @@ class ParetoFront:
     self.addAll(solutionList)
 
     for i in range(1, len(front)):
+      
       if len(front[i]) > 0:
         solutionList = list()
         for j in front[i]:

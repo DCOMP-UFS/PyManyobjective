@@ -221,6 +221,7 @@ class NSGAIII(Algorithm):
     return population
   
   def execute(self):
+    
     self.initializePopulation()
     
     while self.evaluations <= self.maxEvaluations:

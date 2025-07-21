@@ -11,9 +11,8 @@ from numpy import random
 # Classe abstrata dos problemas
 class Problem(object):
   # Construtor
-  def __init__(self, numberOfObjectives,
-               numberOfDecisionVariables,
-               decisionVariablesLimit=None):
+  def __init__(self, numberOfObjectives, numberOfDecisionVariables, decisionVariablesLimit=None):
+    
     self.decisionVariablesLimit    = list()
     self.numberOfDecisionVariables = numberOfDecisionVariables
     self.numberOfObjectives        = numberOfObjectives
@@ -26,6 +25,7 @@ class Problem(object):
   # Metódos concretos
   
   def getNextSolution(self, solution, start, end, increment):
+    
     valVarVez = solution.decisionVariable[self.varVez]
     valVarVez += increment
     

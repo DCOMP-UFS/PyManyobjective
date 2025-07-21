@@ -11,6 +11,7 @@ from numpy import random
 
 # Classe de torneio binário
 class NaryTournament(Selection):
+  
   def __init__(self, tournamentSize):
     super(NaryTournament, self)
     self.tournamentSize = tournamentSize

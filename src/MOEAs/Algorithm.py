@@ -13,14 +13,7 @@ import numpy as np
 # Classe abstrata do algoritmos
 class Algorithm:
   # Construtor
-  def __init__(self, problem,
-               maxEvaluations,
-               populationSize,
-               offSpringPopulationSize,
-               crossover,
-               mutation,
-               selection,
-               sparsity):
+  def __init__(self, problem, maxEvaluations, populationSize, offSpringPopulationSize, crossover, mutation, selection, sparsity):
     
     self.problem                 = problem
     self.maxEvaluations          = maxEvaluations
@@ -43,6 +36,7 @@ class Algorithm:
     return population
   
   def evolute(self):
+    
     parent1 = self.selection.select(list(self.population.copy()))
     parent2 = self.selection.select(list(self.population.copy()))
     
@@ -61,6 +55,7 @@ class Algorithm:
       
       
   def initializePopulation(self):
+    
     self.population.clear()
     solutionList = set()
     
@@ -77,6 +72,7 @@ class Algorithm:
     
   
   def createOffspring(self):
+    
     self.offspring.clear()
     while len(self.offspring) < self.offSpringPopulationSize:
       self.evolute()
