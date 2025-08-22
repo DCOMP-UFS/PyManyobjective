@@ -38,16 +38,23 @@ class DVLFramework:
 
 
     def execute(self):
+        
         sampling: QMCEngine = LatinHypercube(
             d=self.problem.numberOfDecisionVariables
         )
         k:int = self.pop_size
         e:int = self.max_eval
         P_est, objectives = self.execute_dvl(sampling=sampling, dataset_size=k)
-
         # 'd' evaluations left (calls to objective functions) to complete the framework
         d = e - (k + len(P_est))
         P = self.execute_moea(P_est, objectives, e, d)
+
+        P_objective = []
+        for elem in P:
+            P_objective.append(elem.objectives)
+        # print(P_objective)
+        # print(f"\n\n\n\n\n\n{P}")
+        # return P.objectives
         return P
 
 
@@ -70,7 +77,7 @@ class DVLFramework:
         objectives = np.array([
             self.problem.evaluate(Solution(n_obj,n_var,sol)).objectives 
             for sol in solutions
-        ])
+        ])  
 
         if reference_points is None:
             """"@obs
@@ -150,8 +157,9 @@ class DVLFramework:
             HV_prev = HV_curr
         return P_best
 
-
+    
     def execute_moea(self, population, objectives, max_evaluation, d):
+        
         crossover = SBXCrossover(20.0, 0.9)
         mutation_probability = 1.0 / self.problem.numberOfDecisionVariables
         mutation = PolynomialMutation(mutation_probability, 20.0)
@@ -164,8 +172,9 @@ class DVLFramework:
                 mutation=mutation,
                 selection=selection,
             )
-        return self.moea.execute(population=population)
-
+        
+        self.moea.execute(population=population)
+        return self.moea.population
 
     def find_closest_solutions(
         self, reference_point, population, objectives, n_closest: int

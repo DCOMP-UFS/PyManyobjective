@@ -30,7 +30,7 @@ class NSGAIII(Algorithm):
                                  mutation=mutation,
                                  selection=selection,
                                  sparsity=None)
-    
+    print("Entrou!!!")
     self.numberOfDivisions = numberOfDivisions
     
     refPoint             = ReferencePoint()
@@ -46,7 +46,7 @@ class NSGAIII(Algorithm):
     self.referencePointsTree     = SortedDict()
   
   def ASF(self, solution, index):
-    maxRatio = -np.Inf
+    maxRatio = -np.inf #troquei Inf que estava antes por inf
     
     for i in range(solution.numberOfObjectives):
       w = 0
@@ -85,7 +85,7 @@ class NSGAIII(Algorithm):
     extremePoints = list()
     m             = self.problem.numberOfObjectives
     for i in range(m):
-      minObj = np.Inf
+      minObj = np.inf
       minInd = None
       
       for s in fronts[0]:
@@ -99,7 +99,7 @@ class NSGAIII(Algorithm):
         s.objectives[i] -= minObj
     
     for i in range(m):
-      minASF = np.Inf
+      minASF = np.inf
       minInd = None
       
       for s in fronts[0]:
@@ -146,7 +146,7 @@ class NSGAIII(Algorithm):
     for t in range(len(fronts)):
       for s in fronts[t]:
         minRefpoint = -1
-        minDistance = np.Inf
+        minDistance = np.inf
         
         for r in range(len(self.referencePoints)):
           d = perpendicularDistance(self.referencePoints[r].position, s.objectives)
@@ -221,8 +221,9 @@ class NSGAIII(Algorithm):
     return population
   
   def execute(self, population=None):
-    self.initializePopulation(population=population)
     
+    self.initializePopulation(population=population)
+   
     while self.evaluations <= self.maxEvaluations:
       if (self.evaluations % 1) == 0:
         print("Evaluations: " + str(self.evaluations) + " de " + str(self.maxEvaluations) + "...")
@@ -261,3 +262,4 @@ class NSGAIII(Algorithm):
         
         for solution in population:
           self.population.add(solution.clone())
+          

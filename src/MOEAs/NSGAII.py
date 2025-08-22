@@ -28,6 +28,7 @@ class NSGAII(Algorithm):
                                 sparsity)
     
   def execute(self, initialPopulation=None):
+    
     if initialPopulation == None:
       self.initializePopulation()
     else:

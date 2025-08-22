@@ -66,12 +66,16 @@ class Algorithm:
     
     if population is not None:
         i = 0
-        while len(solutionList) < self.populationSize:
+        max_index = min(self.populationSize, len(population)) #testar isso como limite.
+        while len(solutionList) < max_index:
+            # print(f"Valor de i: {i}")
             newSolution = self.problem.generateSolution(decision_vars=population[i])
             newSolution = self.problem.evaluate(newSolution) 
             solutionList.add(newSolution)
             i += 1
             self.evaluations += 1
+            # if i == 54:
+            #   break
     else: 
         while len(solutionList) < self.populationSize:
             newSolution = self.problem.generateSolution()
