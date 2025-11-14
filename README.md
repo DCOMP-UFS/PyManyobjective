@@ -34,3 +34,6 @@ Install dependencies using the `requirements.txt` file.
 ```bash
 $ pip install -r requirements.txt
 ```
+
+## Setup
+- [ ] Create my own documentation. 
