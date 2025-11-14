@@ -8,12 +8,13 @@ import warnings
 warnings.simplefilter(action='ignore', category=RuntimeWarning)
 
 from src.ParetoFront import ParetoFront
-import numpy as np
+from src.problems.Problem import Problem
 
 # Classe abstrata do algoritmos
 class Algorithm:
   # Construtor
-  def __init__(self, problem,
+  def __init__(self, 
+               problem: Problem,
                maxEvaluations,
                populationSize,
                offSpringPopulationSize,
