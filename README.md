@@ -35,5 +35,5 @@ Install dependencies using the `requirements.txt` file.
 $ pip install -r requirements.txt
 ```
 
-## Setup
-- [ ] Create my own documentation. 
+## TODO
+- [ ] Fazer funções para ajudar a plotar gráficos. 
