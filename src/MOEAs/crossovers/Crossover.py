@@ -5,7 +5,10 @@ Created on Thu May 13 15:57:27 2021
 
 @author: jad
 """
-# Classe abstrata de crossover???
+
+from src.Solution import Solution
+
+# Classe abstrata de crossover
 class Crossover():
   # Construtor
   def __init__(self, distributionIndex, crossoverProbability):
@@ -14,6 +17,6 @@ class Crossover():
     self.EPS = 1.0e-14
     
   # Classes abstratas
-  def crossover(self, solutions):
+  def crossover(self, solutions: Solution):
     pass
     

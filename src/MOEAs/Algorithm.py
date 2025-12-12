@@ -7,8 +7,13 @@ Created on Fri Jan 22 07:26:33 2021
 import warnings
 warnings.simplefilter(action='ignore', category=RuntimeWarning)
 
+from typing import Set
+from src.Solution import Solution
+from src.Selection import Selection
 from src.ParetoFront import ParetoFront
 from src.problems.Problem import Problem
+from src.MOEAs.mutations.Mutation import Mutation
+from src.MOEAs.crossovers.Crossover import Crossover
 
 # Classe abstrata do algoritmos
 class Algorithm:
@@ -23,18 +28,18 @@ class Algorithm:
                selection,
                sparsity):
     
-    self.problem                 = problem
-    self.maxEvaluations          = maxEvaluations
-    self.populationSize          = populationSize
-    self.offSpringPopulationSize = int(populationSize/2)
-    self.crossover               = crossover
-    self.mutation                = mutation
-    self.selection               = selection
-    self.sparsity                = sparsity
-    self.population              = set()
-    self.evaluations             = 1
-    self.paretoFront             = ParetoFront()
-    self.offspring               = set()
+    self.problem                    = problem
+    self.maxEvaluations             = maxEvaluations
+    self.populationSize             = populationSize
+    self.offSpringPopulationSize    = int(populationSize/2)
+    self.crossover: Crossover       = crossover
+    self.mutation: Mutation         = mutation
+    self.selection: Selection       = selection
+    self.sparsity                   = sparsity
+    self.population: Set[Solution]  = set()
+    self.evaluations                = 1
+    self.paretoFront                = ParetoFront()
+    self.offspring                  = set()
   
   def clonePopulation(self):
     population = set()

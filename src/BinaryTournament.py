@@ -12,3 +12,5 @@ from src.NaryTournament import NaryTournament
 class BinaryTournament(NaryTournament):
   def __init__(self):
     super(BinaryTournament, self).__init__(2)
+  
+  
