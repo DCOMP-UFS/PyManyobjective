@@ -15,20 +15,24 @@ class TwoPointCrossover(Crossover):
     def __init__(self, distributionIndex, crossoverProbability):
         super().__init__(distributionIndex, crossoverProbability)
     
-    def crossover(self, solutions: List[Solution]):
+    def crossover(self, solutions: List[Solution], lowerBound=None, upperBound=None):
         solution1 = solutions[0]
         solution2 = solutions[1]
 
-        if self.crossoverProbability > np.random.uniform(0.0, 1.0):
-            return [solution1, solution2]
+        offspring1 = solution1.clone()
+        offspring2 = solution2.clone()
+
+        rnd = float(np.random.uniform(0.0, 1.0))
+        if rnd > self.crossoverProbability:
+            return [offspring1, offspring2]
         
-        v = solution1.decisionVariables.copy()
-        w = solution2.decisionVariables.copy()
+        v = offspring1.decisionVariables
+        w = offspring2.decisionVariables
 
         l = len(v)
 
-        c = np.random.randint(0, l)
-        d = np.random.randint(0, l)
+        c = int(np.random.randint(0, l))
+        d = int(np.random.randint(0, l))
 
         if c > d:
             c, d = d, c
@@ -36,11 +40,5 @@ class TwoPointCrossover(Crossover):
         if c != d:
             for i in range(c, d): # Swap on (0, l - 1)
                 v[i], w[i] = w[i], v[i]
-        
-        offspring1 = Solution(solution1.problem)
-        offspring2 = Solution(solution2.problem)
-        
-        offspring1.decisionVariables = v
-        offspring2.decisionVariables = w
-        
+
         return [offspring1, offspring2]

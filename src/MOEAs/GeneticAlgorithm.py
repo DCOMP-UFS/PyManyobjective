@@ -19,6 +19,7 @@ class GeneticAlgorithm(Algorithm):
     def __init__(
         self, 
         problem: Problem, 
+        populationSize,
         maxEvaluations, 
         crossover: Crossover, 
         mutation: Mutation, 
@@ -27,66 +28,68 @@ class GeneticAlgorithm(Algorithm):
         super(GeneticAlgorithm, self).__init__(
             problem=problem, 
             maxEvaluations=maxEvaluations, 
-            populationSize=1, 
-            offSpringPopulationSize=1, 
+            populationSize=populationSize, 
+            offSpringPopulationSize=populationSize, 
             crossover=crossover, 
             mutation=mutation, 
             selection=selection, 
             sparsity=None
         )
 
-    def execute(self, initialPopulation):
-        # Initialize the population
-        if initialPopulation == None:
-            self.initializePopulation()
+    def execute(self, initialPopulation=None):
+        """Algorithm 20 - The Genetic Algorithm (GA) for single-objective minimization."""
+
+        if self.populationSize % 2 != 0:
+            raise ValueError("populationSize must be even (Algorithm 20 requirement)")
+
+        lower = self.problem.decisionVariablesLimit[0]
+        upper = self.problem.decisionVariablesLimit[1]
+
+        # Initialize P
+        if initialPopulation is None:
+            population = [self.problem.generateSolution() for _ in range(self.populationSize)]
         else:
-            self.population = initialPopulation
-        
-        # Best <- {} (empty)
+            population = [p.clone() for p in list(initialPopulation)]
+            if len(population) != self.populationSize:
+                raise ValueError("initialPopulation size must match populationSize")
+
+        # Evaluate initial population
+        self.evaluations = 0
+        for i in range(len(population)):
+            population[i] = self.problem.evaluate(population[i])
+            population[i].evaluated = True
+            self.evaluations += 1
+
         best: Solution = None
 
         # Main loop
-        self.evaluations = 1
         while self.evaluations < self.maxEvaluations:
-            for individual in self.population:
-                # AssessFitness(Pi)
-                if not individual.evaluated: # individual is object of Solution
-                    individual = self.problem.evaluate(individual)
+            # AssessFitness + track Best
+            for individual in population:
+                if not getattr(individual, "evaluated", False):
+                    self.problem.evaluate(individual)
+                    individual.evaluated = True
                     self.evaluations += 1
 
-                # best = {} or Fitness(Pi) > Fitness(Best)
                 if best is None or individual.objectives[0] < best.objectives[0]:
                     best = individual.clone()
-            
-            # Q <- []
+
+            # Generate Q
             offspring_population = []
-
-            # for popsize / 2 times do
             for _ in range(self.populationSize // 2):
-                parent_a = self.selection.select(self.population)
-                parent_b = self.selection.select(self.population)
+                parent_a = self.selection.select(population)
+                parent_b = self.selection.select(population)
 
-                # Children Ca, Cb <= Crossover(Copy(Pa), Copy(Pb))
-                childrens = self.crossover.crossover(parent_a, parent_b)
+                children = self.crossover.crossover([parent_a.clone(), parent_b.clone()], lower, upper)
+                children[0] = self.mutation.mutate(children[0], lower, upper)
+                children[1] = self.mutation.mutate(children[1], lower, upper)
 
-                child_a = self.mutation.mutate(
-                    childrens[0],
-                    self.problem.decisionVariablesLimit[0],
-                    self.problem.decisionVariablesLimit[1],
-                )
-                
-                child_b = self.mutation.mutate(
-                    childrens[0],
-                    self.problem.decisionVariablesLimit[0],
-                    self.problem.decisionVariablesLimit[1],
-                )
+                children[0].evaluated = False
+                children[1].evaluated = False
+                offspring_population.extend(children)
 
-                offspring_population.append(child_a)
-                offspring_population.append(child_b)
-            
-            # P <- Q
-            self.population.clear()
-            for x in offspring_population:
-                self.population.add(offspring_population)
-        
+            population = offspring_population
+
+        # Expose final population (best effort) in the base attribute too
+        self.population = set(population)
         return best
