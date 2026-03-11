@@ -61,11 +61,11 @@ class Problem(object):
     return solution
   
   # Métodos abstratos
-  def evaluate():
-    pass
+  def evaluate(self, solution: Solution):
+    raise NotImplementedError
   
-  def evaluateConstraints():
-    pass
+  def evaluateConstraints(self, solution: Solution):
+    raise NotImplementedError
 
-  def generateParetoFront():
-    pass
+  def generateParetoFront(self):
+    raise NotImplementedError

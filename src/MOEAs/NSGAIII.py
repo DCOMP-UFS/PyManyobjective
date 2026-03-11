@@ -220,8 +220,20 @@ class NSGAIII(Algorithm):
       
     return population
   
-  def execute(self):
-    self.initializePopulation()
+  def execute(self, initialPopulation=None):
+    self.population.clear()
+    self.offspring.clear()
+    self.paretoFront = self.paretoFront.__class__()
+
+    if initialPopulation is None:
+      self.evaluations = 1
+      self.initializePopulation()
+    else:
+      self.evaluations = 0
+      for individual in initialPopulation:
+        evaluated = self.problem.evaluate(individual.clone())
+        self.population.add(evaluated)
+        self.evaluations += 1
     
     while self.evaluations <= self.maxEvaluations:
       if (self.evaluations % 1) == 0:
@@ -253,7 +265,7 @@ class NSGAIII(Algorithm):
         
         rank += 1
         
-      if population == self.populationSize:
+      if popsize == self.populationSize:
         for solution in population:
           self.population.add(solution.clone())
       else:
@@ -261,3 +273,5 @@ class NSGAIII(Algorithm):
         
         for solution in population:
           self.population.add(solution.clone())
+          
+    return self.population
