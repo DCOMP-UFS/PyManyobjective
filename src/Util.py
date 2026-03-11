@@ -6,7 +6,7 @@ Created on Fri Mar  5 09:57:55 2021
 """
 
 import math
-from numpy import random
+import numpy as np
 
 # Classe de pontos de referência
 class ReferencePoint:
@@ -14,72 +14,63 @@ class ReferencePoint:
     self.position         = list()
     self.memberSize       = 0
     self.potentialMembers = list()
-
+    
   def generateReferencePoints(self, numberOfObjectives, numberOfDivisions):
-    refPoint          = ReferencePoint()
-    refPoint.position = [0.0 for _ in range(numberOfObjectives)]
-    return self.recursiveGenerator(list(),
-                                   refPoint,
-                                   numberOfObjectives,
-                                   numberOfDivisions,
-                                   numberOfDivisions,
-                                   0)
+    referencePoints = list()
+    refPoint        = [0.0 for _ in range(numberOfObjectives)]
+    self.recursiveGenerator(referencePoints, refPoint, numberOfObjectives, numberOfDivisions, numberOfDivisions, 0)
     
-  
-  def recursiveGenerator(self, referencePoints, refPoint, m, left, total, element):
-    if element == m-1:
-      refPoint.position[element] = float(left/total)
-      referencePoints.append(refPoint.copy())
-    else:
-      for i in range(left+1):
-        refPoint.position[element] = i/total
-        
-        self.recursiveGenerator(referencePoints,refPoint,m,left-i,total,element+1)
-        
     return referencePoints
-      
-  def copy(self):
-    referencePoint                  = ReferencePoint()
-    referencePoint.position         = self.position.copy()
-    referencePoint.memberSize       = self.memberSize
-    referencePoint.potentialMembers = self.potentialMembers.copy()
     
-    return referencePoint
-  
+  def recursiveGenerator(self, referencePoints, refPoint, m, left, total, element):
+    if element == (m - 1):
+      refPoint[element] = float(left)/float(total)
+      referencePoints.append(self.copy(refPoint))
+    else:
+      for i in range(left + 1):
+        refPoint[element] = float(i)/float(total)
+        self.recursiveGenerator(referencePoints, refPoint, m, left - i, total, element + 1)
+        
+  def copy(self, refPoint):
+    newRefPoint = ReferencePoint()
+    for i in range(len(refPoint)):
+      newRefPoint.position.append(refPoint[i])
+    return newRefPoint
+    
   def addMember(self):
     self.memberSize += 1
     
   def addPotentialMember(self, member, distance):
-    self.potentialMembers.append((member,distance))
+    self.potentialMembers.append((member, distance))
     
   def sort(self):
-    self.potentialMembers.sort(key=lambda x: x[1], reverse=True)
+    self.potentialMembers.sort(key=lambda x: x[1])
     
   def findClosestMember(self):
-    return self.potentialMembers.pop(len(self.potentialMembers)-1)
-  
+    return self.potentialMembers[0]
+    
   def randomMember(self):
-    index  = random.choice([i for i in range(len(self.potentialMembers))])
-    member = self.potentialMembers.pop(index)
-    return member
-  
+    import random as rand
+    index = rand.choice(list(range(len(self.potentialMembers))))
+    return self.potentialMembers[index]
+    
   def remove(self, refPoint):
-    self.potentialMembers.remove(refPoint)
-  
+    pass
+
 def euclideanDistance(a, b):
-  dist = 0
+  distance = 0
   for i in range(len(a)):
-    dist += (a[i] - b[i])*(a[i] - b[i])
-  return math.sqrt(dist)
+    distance += math.pow(a[i] - b[i], 2.0)
+  return math.sqrt(distance)
 
 def distanceToClosestPoint(point, front, distance):
-  minDistance = math.inf
-  for frontPoint in front:
-    dist        = distance(point, frontPoint)
-    minDistance = min(minDistance, dist)
-    
+  minDistance = np.Inf
+  for i in range(len(front)):
+    d = distance(point, front[i].objectives)
+    if d < minDistance:
+      minDistance = d
   return minDistance
-	
+		
 def perpendicularDistance(direction, point):
   numerator = 0
   denominator = 0

@@ -10,27 +10,27 @@
 - To install and set the project's version:
 
 ```bash
-$ pyenv install "$(cat .python-version)"
-$ pyenv local "$(cat .python-version)"
-$ python3 -V
+pyenv install "$(cat .python-version)"
+pyenv local "$(cat .python-version)"
+python3 -V
 ```
 
 ### Virtual Python Environment
 On the project's root create a virtual python environment.
 
 ```bash
-$ python3 -m venv ./venv
+python3 -m venv ./venv
 ```
 
 Activate the environment
 
 ```bash
-$ source ./venv/bin/activate
+source ./venv/bin/activate
 ```
 
 ### Install dependencies
 Install dependencies using the `requirements.txt` file.
 
 ```bash
-$ pip install -r requirements.txt
+pip install -r requirements.txt
 ```

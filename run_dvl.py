@@ -2,6 +2,7 @@ from src.problems.DTLZ import DTLZ2
 from src.dvl.DVL import DVLFramework
 from src.MOEAs.NSGAIII import NSGAIII
 from src.dvl.models.Linear import LinearModel as LR
+from utils.CSV import save_to_csv
 
 # from scipy.stats.qmc import LatinHypercube, QMCEngine
 
@@ -69,6 +70,9 @@ def run():
     P = framework.execute()
     print("Optimization finished.")
     print("Final population size:", len(P))
+    
+    save_to_csv("dvl_results.csv", P)
+
     for i, sol in enumerate(P):
         print(f"Solution {i}: {sol.objectives}")
 
