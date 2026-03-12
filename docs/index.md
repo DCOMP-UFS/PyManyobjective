@@ -2,11 +2,7 @@
 
 O **PyManyObjective** é um framework extensível desenvolvido na linguagem Python focado em resolver Problemas de Otimização com Muitos Objetivos (MaOPs - Many-Objective Optimization Problems). 
 
-Ele oferece implementações dos principais Algoritmos Evolucionários Multiobjetivos (MOEAs) da literatura, bem como algoritmos baseados em *surrogates* e Modelagem Inversa.
-
-A Otimização Multiobjetivo busca encontrar um conjunto de soluções (Fronteira de Pareto) que represente o melhor compromisso entre objetivos conflitantes. Devido à alta exigência computacional de alguns problemas do mundo real, este framework engloba métodos focados em aprendizado de máquina (Machine Learning) e modelos de substituição (*surrogates* e *inverse models*) para acelerar e otimizar a busca pelas soluções ótimas.
-
-## Setup
+## Configuração do Ambiente
 
 ### Versão Recomendada do Python
 - O projeto tem como alvo Python 3.9+. É recomendado o uso do Python 3.10 ou 3.11.
@@ -36,11 +32,11 @@ Instale as dependências usando o arquivo `requirements.txt`:
 pip install -r requirements.txt
 ```
 
-## Arquitetura do Framework
-A estrutura orientada a objetos do framework contempla:
-- **Problem**: Representação abstrata dos problemas de otimização.
-- **Solution**: Representação de uma solução em espaço real com suas variáveis de decisão e valores dos objetivos.
-- **ParetoFront**: Representação da fronteira de Pareto com métodos relacionados.
-- **Algorithm**: Algoritmos base (MOEAs e Surrogates).
-- **Operadores**: Seleção (`Selection`), Cruzamento (`Crossover`), e Mutação (`Mutation`).
+## Como Navegar Pela Documentação
 
+Nossa documentação foi reestruturada para facilitar seu entendimento e separar as seções essenciais:
+
+1. [**Arquitetura do Framework:**](arquitetura.md) Entenda como as classes se relacionam através de um diagrama esquemático, e veja como implementar seus próprios problemas ou algoritmos por meio de herança e de métodos abstratos.
+2. [**Getting Started:**](getting_started.md) Siga um passo a passo prático com códigos Python ensinando como instanciar um problema, configurar o algoritmo e rodar a otimização.
+3. [**Problemas, Operadores e Métricas:**](problemas_metricas.md) Consulte as definições e funções presentes no projeto de forma separada do uso central, tais como funções de Benchmark (ZDT, DTLZ), métricas (IGD, GD) e operadores evolutivos (Cruzamento, Mutação, Seleção).
+4. [**Algoritmos:**](algoritmos_evolucionarios.md) Saiba os detalhes teóricos e conceituais das implementações como NSGA-II, NSGA-III, Modelos Surrogates e DVL.

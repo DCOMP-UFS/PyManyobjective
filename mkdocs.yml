@@ -14,7 +14,9 @@ theme:
         name: Trocar para tema claro
 nav:
   - Home: index.md
+  - Arquitetura do Framework: arquitetura.md
+  - Getting Started: getting_started.md
+  - Problemas, Operadores e Métricas: problemas_metricas.md
   - Algoritmos Evolucionários: algoritmos_evolucionarios.md
   - Algoritmos com Surrogates: algoritmos_surrogate.md
   - Decision Variable Learning (DVL): dvl.md
-  - Problemas e Métricas: problemas_metricas.md
