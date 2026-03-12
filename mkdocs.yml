@@ -1,0 +1,20 @@
+site_name: PyManyObjective
+site_description: A Framework for Inverse Modeling Applied to Multi-objective Evolutionary Algorithms
+theme:
+  name: material
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/brightness-4
+        name: Trocar para tema escuro
+
+    - scheme: slate
+      toggle:
+        icon: material/brightness-7
+        name: Trocar para tema claro
+nav:
+  - Home: index.md
+  - Algoritmos Evolucionários: algoritmos_evolucionarios.md
+  - Algoritmos com Surrogates: algoritmos_surrogate.md
+  - Decision Variable Learning (DVL): dvl.md
+  - Problemas e Métricas: problemas_metricas.md

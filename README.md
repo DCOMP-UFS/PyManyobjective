@@ -12,7 +12,7 @@
 ```bash
 pyenv install "$(cat .python-version)"
 pyenv local "$(cat .python-version)"
-python3 -V
+python3 --version
 ```
 
 ### Virtual Python Environment
@@ -34,3 +34,15 @@ Install dependencies using the `requirements.txt` file.
 ```bash
 pip install -r requirements.txt
 ```
+
+## Documentation
+
+This project includes documentation built with MkDocs in Portuguese (pt-br), explaining how the algorithms work and detailing the already implemented code.
+
+To serve the documentation locally, run the following command:
+
+```bash
+mkdocs serve
+```
+
+This will start a local server, usually available at `http://127.0.0.1:8000/`, where you can read the documentation.
