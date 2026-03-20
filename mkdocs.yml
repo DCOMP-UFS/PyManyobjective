@@ -12,11 +12,5 @@ theme:
       toggle:
         icon: material/brightness-7
         name: Trocar para tema claro
-nav:
-  - Home: index.md
-  - Arquitetura do Framework: arquitetura.md
-  - Getting Started: getting_started.md
-  - Problemas, Operadores e Métricas: problemas_metricas.md
-  - Algoritmos Evolucionários: algoritmos_evolucionarios.md
-  - Algoritmos com Surrogates: algoritmos_surrogate.md
-  - Decision Variable Learning (DVL): dvl.md
+nav: # Basta adicionar os markdowns e o nome da página da documentação
+  - Home: index.md 

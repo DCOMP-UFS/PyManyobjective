@@ -1,16 +1,20 @@
 # Todo List
 
 ## 10/03/2026 - 23/03/2026: Fazer funcionar o DVL Framework na escolha da população inicial
-- [ ] Incorporar o DVL presente na branch do Everton na minha branch
-- [ ] Usar os experimentos propostos por Arthur
-    - [ ] Fazer a leitura das referências bases explicando os problemas de DTLZ
-        - [ ] k = n - m + 1, onde k é a dificuldade do problema
-    - [ ] Executar o DLTZ2 com os seguintes parâmetros:
-        - [ ] 3 objectives and 12 variables
-        - [ ] 10 objectives and 12 variables
-- [ ] Usar a plotagem dos pontos da região de Pareto para testar
-- [ ] Atualizar a documentação do projeto em /docs
-- [ ] Criar um utils/ com funções para plotagem
+- [x] Incorporar o DVL presente na branch do Everton na minha branch
+- [x] Usar os experimentos propostos por Arthur
+    - [x] Fazer a leitura das referências bases explicando os problemas de DTLZ
+        - [x] k = n - m + 1, onde k é a dificuldade do problema
+    - [x] Executar o DLTZ2 com os seguintes parâmetros:
+        - [x] 3 objectives and 12 variables
+        - [x] 10 objectives and 12 variables
+- [x] Usar a plotagem dos pontos da região de Pareto para testar
+- [x] Atualizar a documentação do projeto em /docs
+- [x] Criar um utils/ com funções para plotagem
+
+Observação:
+- Os testes manuais do fluxo experimental do DVL foram centralizados em `DVLFramework.ipynb`.
+- O notebook agora inclui gráficos para debug da fronteira e da população prevista pelo DVL.
 
 ```Códigos do GNUPlot
 Código do GNUPLOT
