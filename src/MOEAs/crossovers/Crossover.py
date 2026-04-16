@@ -17,6 +17,6 @@ class Crossover():
     self.EPS = 1.0e-14
     
   # Classes abstratas
-  def crossover(self, solutions: Solution):
+  def crossover(self, solutions: list[Solution], lowerBound=None, upperBound=None):
     pass
     

@@ -1,10 +1,16 @@
 import numpy as np
 from src.dvl.Model import Model
 from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 class LinearModel(Model):
-    def __init__(self, ):
-       self.regressor = LinearRegression() 
+    def __init__(self, standardize: bool = True, **kwargs):
+        steps = list()
+        if standardize:
+            steps.append(("scaler", StandardScaler()))
+        steps.append(("regressor", LinearRegression(**kwargs)))
+        self.regressor = Pipeline(steps)
 
     def train(self, population, objectives):
         self.regressor.fit(objectives, population)

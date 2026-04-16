@@ -1,13 +1,36 @@
 from sklearn.neural_network import MLPRegressor
 from src.dvl.Model import Model
 import numpy as np
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 class MLPModel(Model):
-    def __init__(self, layers:tuple):
-        self.model =MLPRegressor(hidden_layer_sizes=layers)
+    def __init__(
+        self,
+        layers: tuple,
+        random_state=None,
+        standardize: bool = True,
+        **kwargs,
+    ):
+        steps = list()
+        if standardize:
+            steps.append(("scaler", StandardScaler()))
+        steps.append((
+            "regressor",
+            MLPRegressor(
+                hidden_layer_sizes=layers,
+                random_state=random_state,
+                **kwargs,
+            ),
+        ))
+        self.model = Pipeline(steps)
 
     def train(self, population, objectives):
-        self.model.fit(population, objectives)
+        self.model.fit(objectives, population)
+        return self.model
 
     def predict(self, reference_point) -> np.ndarray:
-        return self.model.predict(reference_point.reshape(1, -1))
+        reference_point = np.asarray(reference_point)
+        if reference_point.ndim == 1:
+            reference_point = reference_point.reshape(1, -1)
+        return self.model.predict(reference_point)

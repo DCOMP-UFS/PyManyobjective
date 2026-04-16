@@ -7,8 +7,6 @@ Classe de soluções to tipo real.
 @author: jadso
 """
 
-from numpy import random
-
 class Solution:
   # Construtor
   def __init__(self, 
@@ -19,7 +17,7 @@ class Solution:
     self.numberOfDecisionVariables = numberOfDecisionVariables
     self.numberOfObjectives        = numberOfObjectives
     self.decisionVariables         = list(decisionVariables) if decisionVariables is not None else list()
-    self.objectives                = list()
+    self.objectives: list[float]   = list()
     
     while len(self.decisionVariables) < numberOfDecisionVariables:
       self.decisionVariables.append(0.0)

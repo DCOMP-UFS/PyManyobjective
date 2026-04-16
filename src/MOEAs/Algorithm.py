@@ -37,9 +37,9 @@ class Algorithm:
     self.selection: Selection       = selection
     self.sparsity                   = sparsity
     self.population: Set[Solution]  = set()
-    self.evaluations                = 1
+    self.evaluations                = 0
     self.paretoFront                = ParetoFront()
-    self.offspring                  = set()
+    self.offspring: set[Solution]                  = set()
   
   def clonePopulation(self):
     population = set()
@@ -49,6 +49,9 @@ class Algorithm:
     return population
   
   def evolute(self):
+    if self.evaluations >= self.maxEvaluations:
+      return
+
     parent1 = self.selection.select(list(self.population.copy()))
     parent2 = self.selection.select(list(self.population.copy()))
     
@@ -61,7 +64,10 @@ class Algorithm:
     children[1] = self.mutation.mutate(children[1],lower,upper)
     
     for solution in children:
+      if self.evaluations >= self.maxEvaluations:
+        break
       s = self.problem.evaluate(solution.clone())
+      s.evaluated = True
       self.offspring.add(s)
       self.evaluations += 1
       
@@ -70,9 +76,10 @@ class Algorithm:
     self.population.clear()
     solutionList = set()
     
-    while len(solutionList) < self.populationSize:
+    while len(solutionList) < self.populationSize and self.evaluations < self.maxEvaluations:
       newSolution = self.problem.generateSolution()
       newSolution = self.problem.evaluate(newSolution) 
+      newSolution.evaluated = True
       solutionList.add(newSolution)
       self.evaluations += 1
       
@@ -84,7 +91,7 @@ class Algorithm:
   
   def createOffspring(self):
     self.offspring.clear()
-    while len(self.offspring) < self.offSpringPopulationSize:
+    while len(self.offspring) < self.offSpringPopulationSize and self.evaluations < self.maxEvaluations:
       self.evolute()
   
   # Classes abstratas

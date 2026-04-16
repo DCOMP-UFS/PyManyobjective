@@ -1,5 +1,4 @@
 import numpy as np
-from matplotlib import pyplot as plt
 from functools import lru_cache
 
 from copy import deepcopy
@@ -8,6 +7,7 @@ from src.Solution import Solution
 from src.BinaryTournament import BinaryTournament
 from src.MOEAs.crossovers.SBXCrossover import SBXCrossover
 from src.MOEAs.mutations.PolynomialMutation import PolynomialMutation
+from src.ParetoFront import ParetoFront
 
 from src.problems.Problem import Problem
 from src.dvl.Model import Model
@@ -21,6 +21,11 @@ class DVLFramework:
             ClassMoea, 
             model: Model, 
             problem: Problem,
+            reference_point_divisions: int | None = None,
+            reference_points=None,
+            sampling_seed: int | None = None,
+            clip_decision_variables: bool = True,
+            objective_transform: str | None = None,
             **moea_kwargs
         ):
         self.pop_size = pop_size
@@ -28,6 +33,11 @@ class DVLFramework:
         self.problem: Problem = problem
         self.model: Model = model
         self.moea = None
+        self.reference_points = reference_points
+        self.reference_point_divisions = reference_point_divisions
+        self.sampling_seed = sampling_seed
+        self.clip_decision_variables = clip_decision_variables
+        self.objective_transform = objective_transform
         """@obs
             API needed to be adapted because we can't determine the max eval upfront.
             we need to pass the moea class and construct it on the fly, to delay the 
@@ -36,35 +46,137 @@ class DVLFramework:
         self.ClassMoea = ClassMoea
         self.moea_kwargs = moea_kwargs
 
+    def _decision_variable_bounds(self):
+        lower = np.asarray(self.problem.decisionVariablesLimit[0], dtype=float)
+        upper = np.asarray(self.problem.decisionVariablesLimit[1], dtype=float)
+        return lower, upper
+
+    def _clip_decision_vector(self, decision_variables):
+        vector = np.asarray(decision_variables, dtype=float).reshape(-1)
+        if not self.clip_decision_variables:
+            return vector
+
+        lower, upper = self._decision_variable_bounds()
+        return np.clip(vector, lower, upper)
+
     def _evaluate_decision_vector(self, decision_variables):
+        bounded_variables = self._clip_decision_vector(decision_variables)
         solution = Solution(
             self.problem.numberOfObjectives,
             self.problem.numberOfDecisionVariables,
-            decision_variables,
+            bounded_variables,
         )
-        return self.problem.evaluate(solution)
+        evaluated = self.problem.evaluate(solution)
+        evaluated.evaluated = True
+        return evaluated
 
+    def _transform_objective_vectors(self, objective_vectors):
+        objective_vectors = np.asarray(objective_vectors, dtype=float)
+        if self.objective_transform is None:
+            return objective_vectors
 
+        if self.objective_transform == "direction":
+            sums = np.sum(objective_vectors, axis=1, keepdims=True)
+            safe_sums = np.where(np.abs(sums) > 1e-12, sums, 1.0)
+            return objective_vectors / safe_sums
 
-    def execute(self):
+        raise ValueError(f"Transformacao de objetivos nao suportada: {self.objective_transform}")
+
+    def _transform_reference_point(self, reference_point):
+        reference_point = np.asarray(reference_point, dtype=float).reshape(1, -1)
+        return self._transform_objective_vectors(reference_point).reshape(-1)
+
+    def _get_reference_points(self, reference_points=None):
+        if reference_points is not None:
+            return np.asarray(reference_points, dtype=float)
+
+        if self.reference_points is not None:
+            return np.asarray(self.reference_points, dtype=float)
+
+        n_divisions = self.reference_point_divisions
+        if n_divisions is None:
+            n_divisions = self.moea_kwargs.get("numberOfDivisions", 2)
+
+        return np.asarray(
+            generate_reference_points(
+                n_obj=self.problem.numberOfObjectives,
+                n_div_per_obj=n_divisions,
+            ),
+            dtype=float,
+        )
+
+    def execute(self, return_trace: bool = False):
         sampling: QMCEngine = LatinHypercube(
-            d=self.problem.numberOfDecisionVariables
+            d=self.problem.numberOfDecisionVariables,
+            seed=self.sampling_seed,
         )
-        k:int = self.pop_size
-        e:int = self.max_eval
-        P_est, objectives = self.execute_dvl(sampling=sampling, dataset_size=k)
+        dataset_size = self.pop_size
+        estimated_population, _, trace = self.execute_dvl(
+            sampling=sampling,
+            dataset_size=dataset_size,
+            return_trace=True,
+        )
 
-        # 'd' evaluations left (calls to objective functions) to complete the framework
-        d = e - (k + len(P_est))
-        P = self.execute_moea(P_est, objectives, e, d)
-        return P
+        dvl_evaluations = dataset_size + len(estimated_population)
+        remaining_evaluations = max(0, self.max_eval - dvl_evaluations)
+        initial_population = trace["estimated_population_solutions"]
+        estimated_front = trace["estimated_front_solutions"]
 
+        if remaining_evaluations > 0:
+            population = self.execute_moea(
+                initial_population=initial_population,
+                remaining_evaluations=remaining_evaluations,
+            )
+        else:
+            population = {solution.clone() for solution in initial_population}
+
+        final_front = extract_nondominated_solutions(population)
+        trace.update({
+            "dataset_size": dataset_size,
+            "dvl_evaluations": dvl_evaluations,
+            "remaining_evaluations": remaining_evaluations,
+            "estimated_front_solutions": estimated_front,
+            "estimated_front_objectives": solutions_to_objectives(
+                estimated_front,
+                self.problem.numberOfObjectives,
+            ),
+            "estimated_front_decision_vectors": solutions_to_decision_vectors(
+                estimated_front,
+                self.problem.numberOfDecisionVariables,
+            ),
+            "final_population": list(population),
+            "final_objectives": solutions_to_objectives(
+                population,
+                self.problem.numberOfObjectives,
+            ),
+            "final_decision_vectors": solutions_to_decision_vectors(
+                population,
+                self.problem.numberOfDecisionVariables,
+            ),
+            "final_front_solutions": final_front,
+            "final_front_objectives": solutions_to_objectives(
+                final_front,
+                self.problem.numberOfObjectives,
+            ),
+            "final_front_decision_vectors": solutions_to_decision_vectors(
+                final_front,
+                self.problem.numberOfDecisionVariables,
+            ),
+        })
+
+        if return_trace:
+            return population, trace
+        return population
 
     # DVL Inverse Modeling only
     # pg. 80 "The necessity of using the hypervolume inside the algorithm is eliminated"
-    def execute_dvl(self, sampling: QMCEngine, dataset_size: int, reference_points=None):
-        n_obj = self.problem.numberOfObjectives
-        n_var = self.problem.numberOfDecisionVariables
+    def execute_dvl(
+        self,
+        sampling: QMCEngine,
+        dataset_size: int,
+        reference_points=None,
+        return_trace: bool = False,
+    ):
         solutions = sampling.random(n=dataset_size)
 
         """@obs
@@ -76,19 +188,13 @@ class DVLFramework:
             class Solution() needed to be changed because we can't pass a already
             valid solution as np.array to the constructor 
         """
-        objectives = np.array([
-            self._evaluate_decision_vector(sol).objectives
-            for sol in solutions
-        ])
-
-        if reference_points is None:
-            """"@obs
-                Genrate_reference takes too long to iterate over, 
-                in the paper it seems that it uses a set a references points already baked
-            """
-            reference_points = np.asarray(
-                generate_reference_points(n_obj=n_obj, n_div_per_obj=2)
-            )
+        sampled_population = [
+            self._evaluate_decision_vector(solution)
+            for solution in solutions
+        ]
+        objectives = solutions_to_objectives(sampled_population)
+        transformed_objectives = self._transform_objective_vectors(objectives)
+        reference_points = self._get_reference_points(reference_points)
         
         """@obs 
             It seems that in the code we use only 1 (one) model
@@ -98,20 +204,62 @@ class DVLFramework:
             M.train(solutions, objectives)
         """
         # ONE model is g(Y) = X, correct?
-        self.model.train(solutions, objectives)
+        self.model.train(solutions, transformed_objectives)
 
         # Estimation for a population as close as possible to the Pareto-optimal front
-        P_estimated = list()
+        raw_predictions = list()
+        bounded_predictions = list()
         for r in reference_points:
-            prediction = self.model.predict(np.asarray(r))
-            P_estimated.append(np.asarray(prediction).reshape(-1))
+            prediction = self.model.predict(self._transform_reference_point(r))
+            raw_prediction = np.asarray(prediction, dtype=float).reshape(-1)
+            raw_predictions.append(raw_prediction)
+            bounded_predictions.append(self._clip_decision_vector(raw_prediction))
 
-        P_objectives = [
-            self._evaluate_decision_vector(sol).objectives
-            for sol in P_estimated
+        estimated_population = [
+            self._evaluate_decision_vector(solution)
+            for solution in bounded_predictions
         ]
+        estimated_front = extract_nondominated_solutions(estimated_population)
+        estimated_objectives = solutions_to_objectives(
+            estimated_population,
+            self.problem.numberOfObjectives,
+        )
+        raw_predictions_np = np.asarray(raw_predictions, dtype=float)
+        bounded_predictions_np = np.asarray(bounded_predictions, dtype=float)
+        lower_bounds, upper_bounds = self._decision_variable_bounds()
+        out_of_bounds_mask = (raw_predictions_np < lower_bounds) | (raw_predictions_np > upper_bounds)
 
-        return np.array(P_estimated), np.array(P_objectives)
+        trace = {
+            "sample_decision_vectors": np.asarray(solutions, dtype=float),
+            "sample_objectives": objectives,
+            "sample_population_solutions": sampled_population,
+            "reference_points": reference_points,
+            "transformed_sample_objectives": transformed_objectives,
+            "transformed_reference_points": np.asarray(
+                [self._transform_reference_point(r) for r in reference_points],
+                dtype=float,
+            ),
+            "estimated_decision_vectors_raw": raw_predictions_np,
+            "estimated_decision_vectors_bounded": bounded_predictions_np,
+            "estimated_population_solutions": estimated_population,
+            "estimated_objectives": estimated_objectives,
+            "estimated_front_solutions": estimated_front,
+            "estimated_front_objectives": solutions_to_objectives(
+                estimated_front,
+                self.problem.numberOfObjectives,
+            ),
+            "predicted_out_of_bounds_mask": out_of_bounds_mask,
+            "predicted_out_of_bounds_count": int(np.count_nonzero(out_of_bounds_mask)),
+            "predicted_out_of_bounds_solutions": int(
+                np.count_nonzero(np.any(out_of_bounds_mask, axis=1))
+            ),
+            "decision_variable_lower_bounds": lower_bounds,
+            "decision_variable_upper_bounds": upper_bounds,
+        }
+
+        if return_trace:
+            return bounded_predictions, estimated_objectives, trace
+        return bounded_predictions, estimated_objectives
 
     # DLV HyperVolume Based Implementation
     def execute_dvl_hv(
@@ -166,25 +314,24 @@ class DVLFramework:
         return P_best
 
 
-    def execute_moea(self, population, objectives, max_evaluation, d):
+    def execute_moea(self, initial_population, remaining_evaluations):
         crossover = SBXCrossover(20.0, 0.9)
         mutation_probability = 1.0 / self.problem.numberOfDecisionVariables
         mutation = PolynomialMutation(mutation_probability, 20.0)
         selection = BinaryTournament()
-        initial_population = {
-            self._evaluate_decision_vector(decision_variables)
-            for decision_variables in population
-        }
+
         self.moea = self.ClassMoea(
                 problem=self.problem,
-                maxEvaluations=d,
+                maxEvaluations=remaining_evaluations,
                 #populationSize=len(population),
                 crossover=crossover,
                 mutation=mutation,
                 selection=selection,
                 **self.moea_kwargs
             )
-        return self.moea.execute(initialPopulation=initial_population)
+        return self.moea.execute(
+            initialPopulation={solution.clone() for solution in initial_population}
+        )
 
 
     def find_closest_solutions(
@@ -243,7 +390,37 @@ def generate_reference_points(n_obj, n_div_per_obj=3):
     )
 
 
-def save_obj_space(filename ,objectives, reference_points):
+def extract_nondominated_solutions(population):
+    population = [solution.clone() for solution in population]
+    if not population:
+        return list()
+
+    pareto_front = ParetoFront()
+    pareto_front.fastNonDominatedSort(population)
+    return pareto_front.getFront(0)
+
+
+def solutions_to_objectives(population, number_of_objectives=None):
+    objectives = [solution.objectives for solution in population]
+    if not objectives:
+        width = 0 if number_of_objectives is None else number_of_objectives
+        return np.empty((0, width), dtype=float)
+
+    return np.asarray(objectives, dtype=float)
+
+
+def solutions_to_decision_vectors(population, number_of_variables=None):
+    decision_vectors = [solution.decisionVariables for solution in population]
+    if not decision_vectors:
+        width = 0 if number_of_variables is None else number_of_variables
+        return np.empty((0, width), dtype=float)
+
+    return np.asarray(decision_vectors, dtype=float)
+
+
+def save_obj_space(filename, objectives, reference_points, show=False):
+    from matplotlib import pyplot as plt
+
     xs = objectives[:,0]
     ys = objectives[:,1]
     zs = objectives[:,2]
@@ -262,4 +439,6 @@ def save_obj_space(filename ,objectives, reference_points):
     ax.set_zlabel("Objective Z")
 
     plt.savefig(filename)
-    plt.show()
+    if show:
+        plt.show()
+    plt.close(fig)

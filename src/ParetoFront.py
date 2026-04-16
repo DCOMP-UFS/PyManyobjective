@@ -11,7 +11,7 @@ class ParetoFront:
   DOMINATED_BY = -1
   NON_DOMINATED = 0
   paretoFront = None
-  front = list()
+  front: list[list] = list()
 
   def getInstance(self):
     if self.paretoFront is None:

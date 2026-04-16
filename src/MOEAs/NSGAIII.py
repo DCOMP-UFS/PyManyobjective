@@ -38,11 +38,10 @@ class NSGAIII(Algorithm):
                                                             self.numberOfDivisions)
     
     populationSize = len(self.referencePoints)
-    while populationSize%4 > 0:
-      populationSize += 1
-      
     self.populationSize          = populationSize
-    self.offSpringPopulationSize = populationSize
+    # Preserve the population size induced by the reference points.
+    # Only the offspring size needs to be even because variation is pairwise.
+    self.offSpringPopulationSize = populationSize if populationSize % 2 == 0 else populationSize + 1
     self.referencePointsTree     = SortedDict()
   
   def ASF(self, solution, index):
@@ -81,28 +80,32 @@ class NSGAIII(Algorithm):
     return x
 
   def normalize(self, fronts):
-    ideal_point   = list()
+    if len(fronts) == 0:
+      return list()
+
+    normalizedFronts = list()
+    for front in fronts:
+      normalizedFronts.append([solution.clone() for solution in front])
+
     extremePoints = list()
     m             = self.problem.numberOfObjectives
+    idealPoint    = [np.Inf for _ in range(m)]
+
     for i in range(m):
-      minObj = np.Inf
-      minInd = None
-      
-      for s in fronts[0]:
-        if s.objectives[i] < minObj:
-          minObj = s.objectives[i]
-          minInd = s.clone()
-          
-      ideal_point.append(minInd)
-      
-      for s in fronts[0]:
-        s.objectives[i] -= minObj
-    
+      for s in normalizedFronts[0]:
+        if s.objectives[i] < idealPoint[i]:
+          idealPoint[i] = s.objectives[i]
+
+    for front in normalizedFronts:
+      for s in front:
+        for i in range(m):
+          s.objectives[i] -= idealPoint[i]
+
     for i in range(m):
       minASF = np.Inf
       minInd = None
       
-      for s in fronts[0]:
+      for s in normalizedFronts[0]:
         asf = self.ASF(s,i)
         
         if asf < minASF:
@@ -126,21 +129,28 @@ class NSGAIII(Algorithm):
       intercepts = [extremePoints[i].objectives[i] for i in range(m)]
     else:
       b = [1.0 for _ in range(m)]
-      A = [s.objectives for s in extremePoints]
-      x = self.guassianElimination(A,b)
-      
-      intercepts = [1.0/x[i] for i in range(m)]
-    
-    normalizedFront = list()
+      A = [list(s.objectives) for s in extremePoints]
+      try:
+        x = self.guassianElimination(A,b)
+        intercepts = [1.0/x[i] for i in range(m)]
+      except ZeroDivisionError:
+        intercepts = [np.nan for _ in range(m)]
+
     for i in range(m):
-      for f in fronts:
-        solutionList = list()
-        for s in f:
+      if (not np.isfinite(intercepts[i])) or intercepts[i] <= 0.0:
+        intercepts[i] = max(
+          [s.objectives[i] for s in normalizedFronts[0]],
+          default=1.0,
+        )
+      if (not np.isfinite(intercepts[i])) or intercepts[i] <= 0.0:
+        intercepts[i] = 1.0
+
+    for front in normalizedFronts:
+      for s in front:
+        for i in range(m):
           s.objectives[i] = s.objectives[i]/intercepts[i]
-          solutionList.append(s.clone())
-        normalizedFront.append(solutionList)
-    
-    return normalizedFront
+
+    return normalizedFronts
   
   def associate(self, fronts):
     for t in range(len(fronts)):
@@ -224,18 +234,26 @@ class NSGAIII(Algorithm):
     self.population.clear()
     self.offspring.clear()
     self.paretoFront = self.paretoFront.__class__()
+    self.referencePointsTree.clear()
+
+    for referencePoint in self.referencePoints:
+      referencePoint.memberSize = 0
+      referencePoint.potentialMembers = list()
 
     if initialPopulation is None:
-      self.evaluations = 1
+      self.evaluations = 0
       self.initializePopulation()
     else:
       self.evaluations = 0
       for individual in initialPopulation:
-        evaluated = self.problem.evaluate(individual.clone())
-        self.population.add(evaluated)
-        self.evaluations += 1
+        candidate = individual.clone()
+        if not getattr(candidate, "evaluated", False):
+          candidate = self.problem.evaluate(candidate)
+          candidate.evaluated = True
+          self.evaluations += 1
+        self.population.add(candidate)
     
-    while self.evaluations <= self.maxEvaluations:
+    while self.evaluations < self.maxEvaluations:
       if (self.evaluations % 1) == 0:
         print("Evaluations: " + str(self.evaluations) + " de " + str(self.maxEvaluations) + "...")
     
