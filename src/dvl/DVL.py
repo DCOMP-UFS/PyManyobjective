@@ -26,6 +26,8 @@ class DVLFramework:
             sampling_seed: int | None = None,
             clip_decision_variables: bool = True,
             objective_transform: str | None = None,
+            training_evaluations: int | None = None,
+            run_moea: bool = True,
             **moea_kwargs
         ):
         self.pop_size = pop_size
@@ -38,6 +40,8 @@ class DVLFramework:
         self.sampling_seed = sampling_seed
         self.clip_decision_variables = clip_decision_variables
         self.objective_transform = objective_transform
+        self.training_evaluations = training_evaluations
+        self.run_moea = run_moea
         """@obs
             API needed to be adapted because we can't determine the max eval upfront.
             we need to pass the moea class and construct it on the fly, to delay the 
@@ -110,7 +114,7 @@ class DVLFramework:
             d=self.problem.numberOfDecisionVariables,
             seed=self.sampling_seed,
         )
-        dataset_size = self.pop_size
+        dataset_size = self.training_evaluations if self.training_evaluations is not None else self.pop_size
         estimated_population, _, trace = self.execute_dvl(
             sampling=sampling,
             dataset_size=dataset_size,
@@ -122,7 +126,7 @@ class DVLFramework:
         initial_population = trace["estimated_population_solutions"]
         estimated_front = trace["estimated_front_solutions"]
 
-        if remaining_evaluations > 0:
+        if self.run_moea and remaining_evaluations > 0:
             population = self.execute_moea(
                 initial_population=initial_population,
                 remaining_evaluations=remaining_evaluations,
@@ -320,18 +324,46 @@ class DVLFramework:
         mutation = PolynomialMutation(mutation_probability, 20.0)
         selection = BinaryTournament()
 
-        self.moea = self.ClassMoea(
-                problem=self.problem,
-                maxEvaluations=remaining_evaluations,
-                #populationSize=len(population),
-                crossover=crossover,
-                mutation=mutation,
-                selection=selection,
-                **self.moea_kwargs
-            )
-        return self.moea.execute(
+        try:
+            from src.MOEAs.sparsities.CrowdingDistance import CrowdingDistance
+            sparsity = CrowdingDistance()
+        except ImportError:
+            sparsity = None
+
+        import inspect
+        sig = inspect.signature(self.ClassMoea)
+        params = sig.parameters
+
+        kwargs = {}
+        if "problem" in params:
+            kwargs["problem"] = self.problem
+        if "maxEvaluations" in params:
+            kwargs["maxEvaluations"] = remaining_evaluations
+        if "crossover" in params:
+            kwargs["crossover"] = crossover
+        if "mutation" in params:
+            kwargs["mutation"] = mutation
+        if "selection" in params:
+            kwargs["selection"] = selection
+        if "sparsity" in params:
+            kwargs["sparsity"] = sparsity
+        if "populationSize" in params:
+            kwargs["populationSize"] = len(initial_population)
+        if "offSpringPopulationSize" in params:
+            kwargs["offSpringPopulationSize"] = len(initial_population)
+
+        # Merge self.moea_kwargs, overriding or adding extra parameters
+        for k, v in self.moea_kwargs.items():
+            if k in params:
+                kwargs[k] = v
+
+        self.moea = self.ClassMoea(**kwargs)
+        res = self.moea.execute(
             initialPopulation={solution.clone() for solution in initial_population}
         )
+        if res is not None:
+            return res
+        return self.moea.population
 
 
     def find_closest_solutions(
