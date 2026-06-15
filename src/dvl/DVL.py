@@ -351,6 +351,8 @@ class DVLFramework:
             kwargs["populationSize"] = len(initial_population)
         if "offSpringPopulationSize" in params:
             kwargs["offSpringPopulationSize"] = len(initial_population)
+        if "numberOfDivisions" in params and self.reference_point_divisions is not None:
+            kwargs["numberOfDivisions"] = self.reference_point_divisions
 
         # Merge self.moea_kwargs, overriding or adding extra parameters
         for k, v in self.moea_kwargs.items():
