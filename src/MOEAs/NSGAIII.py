@@ -254,7 +254,7 @@ class NSGAIII(Algorithm):
         self.population.add(candidate)
     
     while self.evaluations < self.maxEvaluations:
-      if (self.evaluations % 1) == 0:
+      if (self.evaluations % 1000) == 0:
         print("Evaluations: " + str(self.evaluations) + " de " + str(self.maxEvaluations) + "...")
     
       self.createOffspring()

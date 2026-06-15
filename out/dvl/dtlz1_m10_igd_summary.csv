@@ -1,6 +1,0 @@
-problem,objectives,decision_variables,problem_k,evaluations,sample_size,estimated_igd,final_igd,final_hv,final_front_size,run_dir,csv_dir
-DTLZ1,10,19,10,250,50,72.73869494721885,72.73869494721885,0.0,82,out/dvl/dtlz1_m10_n19_e250_k50_linear,out/dvl/dtlz1_m10_n19_e250_k50_linear/csv
-DTLZ1,10,19,10,500,112,61.835803551179175,1.5360547448749007,8213487.599395871,132,out/dvl/dtlz1_m10_n19_e500_k112_linear,out/dvl/dtlz1_m10_n19_e500_k112_linear/csv
-DTLZ1,10,19,10,1000,200,72.48314689135596,0.4948841070479939,9765480.423632925,89,out/dvl/dtlz1_m10_n19_e1000_k200_linear,out/dvl/dtlz1_m10_n19_e1000_k200_linear/csv
-DTLZ1,10,19,10,1500,200,72.48314689135596,0.28903608667352354,9765617.080372946,135,out/dvl/dtlz1_m10_n19_e1500_k200_linear,out/dvl/dtlz1_m10_n19_e1500_k200_linear/csv
-DTLZ1,10,19,10,10000,300,63.99954967027518,0.26436468963241766,9763826.201084435,131,out/dvl/dtlz1_m10_n19_e10000_k300_linear,out/dvl/dtlz1_m10_n19_e10000_k300_linear/csv
