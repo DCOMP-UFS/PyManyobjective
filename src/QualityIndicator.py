@@ -1,5 +1,6 @@
 import math
 import numpy as np
+from scipy.spatial.distance import cdist
 from pymoo.factory import get_performance_indicator
 
 class QualityIndicator(object):
@@ -28,37 +29,35 @@ class IGD(QualityIndicator):
   def __init__(self, referenceFront, mult_pow=2.0):
     super(type(self), self).__init__(referenceFront)
     self.mult_pow = mult_pow
+    self.ref_front_arr = np.asarray(referenceFront, dtype=float)
 
   def calculate(self, front):
-    if len(front) == 0 or len(self.referenceFront) == 0:
+    front_arr = np.asarray(front, dtype=float)
+    if front_arr.size == 0 or self.ref_front_arr.size == 0:
       print("IDG evaluate: front or referenceFront without elements")
+      return 0.0
 
-    sum_ = 0
-    for point in self.referenceFront:
-      dist = self.distanceToClosestPoint(point=point,
-                                         front=front,
-                                         distance=self.euclideanDistance)
-      sum_ += math.pow(dist, self.mult_pow)
-
-    return math.pow(sum_ / len(self.referenceFront), 1.0/self.mult_pow)
+    dists = cdist(self.ref_front_arr, front_arr, metric='euclidean')
+    min_dists = np.min(dists, axis=1)
+    sum_ = np.sum(np.power(min_dists, self.mult_pow))
+    return float(np.power(sum_ / len(self.ref_front_arr), 1.0/self.mult_pow))
   
 class GD(QualityIndicator):
   def __init__(self, referenceFront, mult_pow=2.0):
     super(type(self), self).__init__(referenceFront)
     self.mult_pow = mult_pow
+    self.ref_front_arr = np.asarray(referenceFront, dtype=float)
 
   def calculate(self, front):
-    if len(front) == 0 or len(self.referenceFront) == 0:
+    front_arr = np.asarray(front, dtype=float)
+    if front_arr.size == 0 or self.ref_front_arr.size == 0:
       print("IDG evaluate: front or referenceFront without elements")
+      return 0.0
 
-    sum_ = 0
-    for point in front:
-      dist = self.distanceToClosestPoint(point=point,
-                                         front=self.referenceFront,
-                                         distance=self.euclideanDistance)
-      sum_ += math.pow(dist, self.mult_pow)
-
-    return math.pow(sum_ / len(front), 1.0/self.mult_pow)
+    dists = cdist(front_arr, self.ref_front_arr, metric='euclidean')
+    min_dists = np.min(dists, axis=1)
+    sum_ = np.sum(np.power(min_dists, self.mult_pow))
+    return float(np.power(sum_ / len(front_arr), 1.0/self.mult_pow))
 
 
 class HV(QualityIndicator):
@@ -70,7 +69,10 @@ class HV(QualityIndicator):
     self.idealPoint = np.asarray(idealPoint, dtype=float)
     self.last_valid_count = 0
     self.last_total_count = 0
-    self.indicator = get_performance_indicator("hv", ref_point=self.referencePoint)
+    if len(self.referencePoint) < 5:
+      self.indicator = get_performance_indicator("hv", ref_point=self.referencePoint)
+    else:
+      self.indicator = None
 
   def _filter_front(self, front):
     front = np.asarray(front, dtype=float)
@@ -95,4 +97,21 @@ class HV(QualityIndicator):
     valid_front = self._filter_front(front)
     if len(valid_front) == 0:
       return 0.0
-    return float(self.indicator.calc(valid_front))
+    if len(self.referencePoint) < 5:
+      return float(self.indicator.calc(valid_front))
+    else:
+      return self.monte_carlo_hv(valid_front)
+
+  def monte_carlo_hv(self, front, n_samples=100000, chunk_size=20000) -> float:
+    hyperbox_volume = np.prod(self.referencePoint - self.idealPoint)
+    dominated_count = 0
+    n_chunks = n_samples // chunk_size
+    remainder = n_samples % chunk_size
+    chunks = [chunk_size] * n_chunks
+    if remainder > 0:
+      chunks.append(remainder)
+    for chunk in chunks:
+      samples = np.random.uniform(self.idealPoint, self.referencePoint, size=(chunk, len(self.referencePoint)))
+      is_dominated = np.any(np.all(front[np.newaxis, :, :] <= samples[:, np.newaxis, :], axis=2), axis=1)
+      dominated_count += np.sum(is_dominated)
+    return float((dominated_count / n_samples) * hyperbox_volume)
