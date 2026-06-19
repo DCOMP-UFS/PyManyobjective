@@ -1,0 +1,82 @@
+Devemos modificar nosso notebook @experimentos.ipynb para ele seguir a seguinte configuração:
+
+Configuração Experimental:
+
+> Parâmetro
+Problemas: DTLZ1 até DTLZ4
+Algoritmos: MOEA/D, NSGA-II, NSGA-III
+Modelo de ML para o DVL: MLP (Multilayer Perceptron)
+Quantidade de Avaliações: 250, 500, 1.000, 1.500, 10.000, 100.000 (rode essas configurações para 3 e 10 objetivos levando em conta as configurações que estamos usando hoje em dia)
+Variações: 10%, 25%, 50% e 75% das avaliações totais para o DVL (que vão gerar o MOEA + DVL Framework X%)
+Budget para o MOEA: Restantes das avaliações totais
+Repetições: 20 execuções independentes
+
+Algumas tarefas vão ser necessárias de fazer no checklist:
+1. Implementação do Wrapper: Ajustar o seu framework para que o DVL execute exatamente $X%$ das avaliações permitidas e então "passe o bastão" para o MOEA finalizar as $(100-X)%$ restantes. (Podemos criar uma classe, algo do gênero, pois ainda quero definir manualmente a quantidade de DVL em situações futuras algo que já é possível)
+
+2. Coleta de Dados: Salvar as métricas de Hypervolume, Tempo de Execução da CPU (separe o tempo necessário para treinamento do modelo, execução da função objetivo, mas também guarde o tempo total da execução), Quantidade de Execuções usadas no DVL e Quantidade de Execuções usadas no MOEA.
+
+3. Análise Estatística: 
+    - Calcular a média e desvio padrão dos Dados
+    - Aplicar o teste de hipótese (Wilcoxon ou Conover) para comparar se as variações de 10/25/50/75% trazem ganho estatisticamente significativo sobre o MOEA puro. Isso está sendo feito em @testes_estatísticos.ipynb.
+    - Gere uma compilada de Vitórias/Empates/Derrotas: Esta tabela é um requisito específico para sintetizar a comparação estatística, semelhante ao que é feito no capítulo 3 da dissertação do Artur. Ela serve para consolidar o desempenho superior (ou equivalente) de uma configuração em relação às outras.
+    - Gere heatmaps como o que Artur colocou nos apêndicas do artigo dele.
+
+4. Me ajude a criar tabelas com os resultados estatísticos como as tabelas 14, 15, 19 e 20 da dissertação do Artur que tratam de metadados.
+    - Vou te falar um resumo sobre como as tabelas precisam ser montadas em LaTex:
+    """
+    Na literatura de Otimização Evolutiva (como na dissertação do Artur), o negrito é usado para indicar o melhor desempenho estatístico ou numérico.
+
+A regra acadêmica padrão é:
+Melhor Valor: Você coloca em negrito o valor da média (e possivelmente o desvio padrão) da configuração que obteve o melhor resultado (maior Hipervolume é melhor; menor IGD ou menor Tempo é melhor).
+Significância Estatística: Se você aplicou o teste de Wilcoxon (ou Conover), o ideal é que você coloque em negrito o valor da média do algoritmo "vencedor" e também de todos os outros algoritmos que não apresentaram diferença estatística significativa em relação a ele (ou seja, p-value > 0.05). Isso mostra que, embora um valor seja numericamente maior, estatisticamente eles são equivalentes.
+2. Estrutura das Tabelas (LaTeX)
+
+Para organizar bem, sugiro criar duas tabelas separadas. O formato ideal é utilizar o pacote booktabs (usando \toprule, \midrule, \bottomrule) para um visual profissional.Tabela de Hipervolume (HV)
+
+Esta tabela deve comparar os algoritmos (MOEA/D, NSGAII, NSGAIII) com suas variações (10%, 25%, 50% de DVL).
+\begin{table}[ht]
+\centering
+\caption{Resultados estatísticos do Hipervolume para o problema DTLZ1.}
+\label{tab:hv_dtlz1}
+\begin{tabular}{l c c}
+\toprule
+\textbf{Algoritmo} & \textbf{Média} & \textbf{Desvio Padrão} \\
+\midrule
+MOEA/D (Puro)      & 0.4523         & 0.0012 \\
+MOEA/D + DVL (10\%) & \textbf{0.5120} & \textbf{0.0005} \\
+MOEA/D + DVL (25\%) & 0.5010         & 0.0008 \\
+MOEA/D + DVL (50\%) & 0.4890         & 0.0010 \\
+\bottomrule
+\end{tabular}
+\end{table}
+Tabela de Tempo de Execução
+
+O objetivo aqui é mostrar que o uso do DVL não degrada o tempo de forma proibitiva.
+\begin{table}[ht]
+\centering
+\caption{Tempo de execução médio (em segundos) para o problema DTLZ1.}
+\label{tab:tempo_dtlz1}
+\begin{tabular}{l c c}
+\toprule
+\textbf{Algoritmo} & \textbf{Tempo Médio} & \textbf{Desvio Padrão} \\
+\midrule
+MOEA/D (Puro)      & \textbf{120.5} & \textbf{2.1} \\
+MOEA/D + DVL (10\%) & 145.2         & 3.5 \\
+MOEA/D + DVL (25\%) & 158.8         & 4.0 \\
+MOEA/D + DVL (50\%) & 180.3         & 5.2 \\
+\bottomrule
+\end{tabular}
+\end{table}
+Dicas para a Construção:
+Agrupamento: Se o artigo for curto, você pode condensar. Mas para o ENIAC, tabelas separadas para HV e Tempo por problema (ou uma tabela grande por problema contendo os dados) são aceitáveis.
+Precisão: Mantenha um número consistente de casas decimais (ex: 4 casas para HV e 1 ou 2 para tempo).
+Coluna de Algoritmos: Tente agrupar os resultados para facilitar a leitura. Se estiver comparando vários DTLZs, você pode ter uma tabela maior com uma coluna extra à esquerda chamada "Problema".
+Um lembrete importante sobre a dissertação do Artur:
+
+Note que no capítulo 4 da dissertação (pág. 90-91), ele apresenta as tabelas 19 e 20. Observe como ele organiza:
+As linhas representam os algoritmos/configurações.
+A média e o desvio padrão geralmente ficam na mesma coluna, formatados assim: 0.5120 \pm 0.0005. Isso economiza espaço na tabela.
+Você prefere que eu monte um exemplo de código LaTeX usando esse formato média ± desvio na mesma coluna? Isso costuma ser o padrão preferido pelo professor André, pois deixa a tabela mais compacta.
+    """
+    Note que ele não fala sobre o 75%, mas leve em consideração essa variação também.

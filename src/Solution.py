@@ -50,5 +50,8 @@ class Solution:
       solution.objectives[i] = objective
 
     solution.evaluated = self.evaluated
+    solution.rank = self.rank
+    solution.sparsity = self.sparsity
+    solution.cluster = self.cluster
       
     return solution

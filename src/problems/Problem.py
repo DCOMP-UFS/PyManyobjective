@@ -18,10 +18,22 @@ class Problem(object):
     self.numberOfDecisionVariables = numberOfDecisionVariables
     self.numberOfObjectives        = numberOfObjectives
     self.avaliations               = 0
+    self.evaluation_time           = 0.0
     
     if not decisionVariablesLimit is None:
       for i in decisionVariablesLimit:
         self.decisionVariablesLimit.append(i)
+        
+    # Wrap self.evaluate to automatically track objective function evaluations and time
+    original_evaluate = self.evaluate
+    def wrapped_evaluate(solution):
+      import time
+      self.avaliations += 1
+      start = time.perf_counter()
+      res = original_evaluate(solution)
+      self.evaluation_time += time.perf_counter() - start
+      return res
+    self.evaluate = wrapped_evaluate
     
   # Metódos concretos
   

@@ -58,10 +58,13 @@ class ReferencePoint:
     pass
 
 def euclideanDistance(a, b):
-  distance = 0
-  for i in range(len(a)):
-    distance += math.pow(a[i] - b[i], 2.0)
-  return math.sqrt(distance)
+  # Implementação com numpy para não estourar (OverflowError) quando os
+  # objetivos são muito grandes (ex.: soluções DTLZ mal convergidas com g
+  # explodido). Em overflow o numpy retorna inf em vez de lançar exceção.
+  a = np.asarray(a, dtype=float)
+  b = np.asarray(b, dtype=float)
+  diff = a - b
+  return float(np.sqrt(np.dot(diff, diff)))
 
 def distanceToClosestPoint(point, front, distance):
   minDistance = np.Inf
@@ -72,17 +75,16 @@ def distanceToClosestPoint(point, front, distance):
   return minDistance
 		
 def perpendicularDistance(direction, point):
-  numerator = 0
-  denominator = 0
-  
-  for i in range(len(direction)):
-    numerator   += direction[i]*point[i]
-    denominator += math.pow(direction[i], 2.0)
+  # Implementação com numpy para não estourar (OverflowError) quando o ponto
+  # tem objetivos muito grandes. Em overflow o numpy retorna inf, fazendo a
+  # solução simplesmente não ser escolhida como mais próxima.
+  direction = np.asarray(direction, dtype=float)
+  point = np.asarray(point, dtype=float)
 
-  k = numerator/denominator
-  
-  d = 0
-  for i in range(len(direction)):
-    d += math.pow(k*direction[i] - point[i],2.0)
-    
-  return math.sqrt(d)
+  denominator = np.dot(direction, direction)
+  if denominator == 0.0:
+    return float(np.sqrt(np.dot(point, point)))
+
+  k = np.dot(direction, point) / denominator
+  diff = k * direction - point
+  return float(np.sqrt(np.dot(diff, diff)))

@@ -74,4 +74,4 @@ class PolynomialMutation(Mutation):
           
         individual.decisionVariables[i] = y
       
-      return individual
+    return individual

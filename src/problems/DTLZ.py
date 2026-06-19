@@ -66,7 +66,6 @@ class DTLZ1(Problem):
     for i in range(numberOfObjectives):
       solution.objectives[i] = f[i]
     
-    self.avaliations += 1
     return solution
   
   # Calcula a fronteira de Pareto

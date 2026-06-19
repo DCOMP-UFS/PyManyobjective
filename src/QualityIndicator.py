@@ -69,7 +69,10 @@ class HV(QualityIndicator):
     self.idealPoint = np.asarray(idealPoint, dtype=float)
     self.last_valid_count = 0
     self.last_total_count = 0
-    self.indicator = get_performance_indicator("hv", ref_point=self.referencePoint)
+    if len(self.referencePoint) < 5:
+      self.indicator = get_performance_indicator("hv", ref_point=self.referencePoint)
+    else:
+      self.indicator = None
 
   def _filter_front(self, front):
     front = np.asarray(front, dtype=float)
@@ -94,4 +97,21 @@ class HV(QualityIndicator):
     valid_front = self._filter_front(front)
     if len(valid_front) == 0:
       return 0.0
-    return float(self.indicator.calc(valid_front))
+    if len(self.referencePoint) < 5:
+      return float(self.indicator.calc(valid_front))
+    else:
+      return self.monte_carlo_hv(valid_front)
+
+  def monte_carlo_hv(self, front, n_samples=100000, chunk_size=20000) -> float:
+    hyperbox_volume = np.prod(self.referencePoint - self.idealPoint)
+    dominated_count = 0
+    n_chunks = n_samples // chunk_size
+    remainder = n_samples % chunk_size
+    chunks = [chunk_size] * n_chunks
+    if remainder > 0:
+      chunks.append(remainder)
+    for chunk in chunks:
+      samples = np.random.uniform(self.idealPoint, self.referencePoint, size=(chunk, len(self.referencePoint)))
+      is_dominated = np.any(np.all(front[np.newaxis, :, :] <= samples[:, np.newaxis, :], axis=2), axis=1)
+      dominated_count += np.sum(is_dominated)
+    return float((dominated_count / n_samples) * hyperbox_volume)

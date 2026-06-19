@@ -38,6 +38,5 @@ class Ackley(Problem):
         f = -self.a * exp(-self.b * sqrt((1 / D) * sum([xi**2 for xi in x]))) - exp((1 / D) * sum([cos(self.c*xi) for xi in x])) + self.a + exp(1)
         
         solution.objectives[0] = f
-        self.avaliations += 1
         
         return solution

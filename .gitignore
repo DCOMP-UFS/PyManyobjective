@@ -1,6 +1,3 @@
-__pycache__/
-results/
-
 .venv
-
 .vscode/
+__pycache__/

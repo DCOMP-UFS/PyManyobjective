@@ -7,7 +7,7 @@ from sklearn.preprocessing import StandardScaler
 class MLPModel(Model):
     def __init__(
         self,
-        layers: tuple,
+        layers: tuple = (11, 11, 11),
         random_state=None,
         standardize: bool = True,
         **kwargs,
@@ -15,6 +15,7 @@ class MLPModel(Model):
         steps = list()
         if standardize:
             steps.append(("scaler", StandardScaler()))
+        kwargs.setdefault("max_iter", 1000)
         steps.append((
             "regressor",
             MLPRegressor(

@@ -31,6 +31,5 @@ class Sphere(Problem):
         f = sum([xi**2 for xi in x])
         
         solution.objectives[0] = f
-        self.avaliations += 1
         
         return solution

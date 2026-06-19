@@ -194,6 +194,11 @@ class NSGAIII(Algorithm):
     if k == 0:
       return population
     
+    self.referencePointsTree.clear()
+    for rp in self.referencePoints:
+      rp.memberSize = 0
+      rp.potentialMembers = list()
+    
     fronts = self.normalize(fronts)
     
     self.associate(fronts)

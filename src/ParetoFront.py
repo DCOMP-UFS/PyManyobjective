@@ -90,7 +90,9 @@ class ParetoFront:
     
     solutionList = list()
     for i in front[0]:
-      solutionList.append(population[i].clone())
+      s = population[i].clone()
+      s.rank = 0
+      solutionList.append(s)
       
     self.addAll(solutionList)
 
@@ -98,5 +100,7 @@ class ParetoFront:
       if len(front[i]) > 0:
         solutionList = list()
         for j in front[i]:
-          solutionList.append(population[j].clone())
+          s = population[j].clone()
+          s.rank = i
+          solutionList.append(s)
         self.addAll(solutionList)

@@ -31,7 +31,12 @@ class Algorithm:
     self.problem                    = problem
     self.maxEvaluations             = maxEvaluations
     self.populationSize             = populationSize
-    self.offSpringPopulationSize    = int(populationSize/2)
+    # Respeita o tamanho da prole informado pelo chamador. Antes este valor era
+    # sobrescrito por int(populationSize/2), ignorando o argumento recebido (o
+    # run_experiments passa offSpringPopulationSize=populationSize para o
+    # pure_moea). Subclasses que precisam de outro valor (ex.: NSGA-III) ainda
+    # podem redefini-lo após chamar super().__init__.
+    self.offSpringPopulationSize    = offSpringPopulationSize
     self.crossover: Crossover       = crossover
     self.mutation: Mutation         = mutation
     self.selection: Selection       = selection

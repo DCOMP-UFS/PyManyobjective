@@ -28,12 +28,22 @@ class NSGAII(Algorithm):
                                 sparsity)
     
   def execute(self, initialPopulation=None):
-    if initialPopulation == None:
+    self.population.clear()
+    self.offspring.clear()
+    self.paretoFront = self.paretoFront.__class__()
+
+    if initialPopulation is None:
+      self.evaluations = 0
       self.initializePopulation()
     else:
-      self.population = initialPopulation
-      for individual in self.population:
-        self.problem.evaluate(individual)
+      self.evaluations = 0
+      for individual in initialPopulation:
+        candidate = individual.clone()
+        if not getattr(candidate, "evaluated", False):
+          candidate = self.problem.evaluate(candidate)
+          candidate.evaluated = True
+          self.evaluations += 1
+        self.population.add(candidate)
     self.createOffspring()
 
     while self.evaluations < self.maxEvaluations:

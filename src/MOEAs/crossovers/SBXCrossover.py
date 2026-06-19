@@ -46,7 +46,7 @@ class SBXCrossover(Crossover):
             if rand <= (1.0 / alpha):
               betaq = np.power(rand * alpha, (1.0 / (self.distributionIndex + 1.0)))
             else:
-              betaq = np.power(1.0 / (2.0 - rand * alpha), 1.0 / (1.0 / (self.distributionIndex + 1.0)))
+              betaq = np.power(1.0 / (2.0 - rand * alpha), 1.0 / (self.distributionIndex + 1.0))
             
             c1 = 0.5 * (y1 + y2 - betaq * (y2 - y1))
             
@@ -56,7 +56,7 @@ class SBXCrossover(Crossover):
             if rand <= (1.0 / alpha):
               betaq = np.power(rand * alpha, (1.0 / (self.distributionIndex + 1.0)))
             else:
-              betaq = np.power(1.0 / (2.0 - rand * alpha), 1.0 / (1.0 / (self.distributionIndex + 1.0)))
+              betaq = np.power(1.0 / (2.0 - rand * alpha), 1.0 / (self.distributionIndex + 1.0))
               
             c2 = 0.5 * (y1 + y2 + betaq * (y2 - y1))
             
